@@ -6,6 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { ProfileForm } from "@/components/profile/profile-form"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { SyncDashboard } from "@/components/admin/sync-dashboard"
+import { MatchResults } from "@/components/matches/match-results"
 import { LogOut, Search, FileText, Mail, BarChart3, Settings, Briefcase, Users, TrendingUp, Database } from "lucide-react"
 
 export function Dashboard() {
@@ -117,15 +118,7 @@ export function Dashboard() {
           </TabsContent>
 
           <TabsContent value="matches">
-            <Card>
-              <CardHeader>
-                <CardTitle>All Job Matches</CardTitle>
-                <CardDescription>Complete list of your AI-discovered opportunities</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <p className="text-slate-600">Job matches functionality coming soon...</p>
-              </CardContent>
-            </Card>
+            <MatchResults showFilters={true} showStats={true} limit={20} />
           </TabsContent>
 
           <TabsContent value="profile">

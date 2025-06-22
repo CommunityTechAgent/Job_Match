@@ -26,8 +26,57 @@ export type Profile = {
   experience_level: string | null
   skills: string[] | null
   resume_url: string | null
+  resume_path: string | null
+  resume_filename: string | null
+  resume_updated_at: string | null
+  // Enhanced profile fields
+  profile_image_url: string | null
+  headline: string | null
+  bio: string | null
+  experience_years: number | null
+  education: EducationEntry[] | null
+  preferred_job_types: string[] | null
+  preferred_locations: string[] | null
+  preferred_salary_range: SalaryRange | null
+  website: string | null
+  linkedin_url: string | null
+  github_url: string | null
+  portfolio_url: string | null
+  phone: string | null
+  date_of_birth: string | null
+  availability_status: 'Available' | 'Open to opportunities' | 'Not looking' | 'Employed' | null
+  work_authorization: 'US Citizen' | 'Permanent Resident' | 'Work Visa' | 'Student Visa' | 'Other' | null
+  remote_preference: 'On-site' | 'Hybrid' | 'Remote' | 'Flexible' | null
+  relocation_willingness: 'Willing to relocate' | 'Open to discussion' | 'Not willing to relocate' | null
   created_at: string
   updated_at: string
+}
+
+// Supporting types for enhanced profile
+export type EducationEntry = {
+  institution: string
+  degree: string
+  field: string
+  start_date?: string
+  end_date?: string
+  description?: string
+  gpa?: number
+}
+
+export type SalaryRange = {
+  min: number
+  max: number
+  currency?: string
+}
+
+export type WorkExperience = {
+  company: string
+  position: string
+  start_date: string
+  end_date?: string
+  description: string
+  location?: string
+  achievements?: string[]
 }
 
 export type JobMatch = {

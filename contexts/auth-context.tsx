@@ -11,6 +11,7 @@ interface AuthContextType {
   profile: Profile | null
   session: Session | null
   loading: boolean
+  supabase: typeof supabase
   signUp: (email: string, password: string, fullName: string) => Promise<{ error: any }>
   signIn: (email: string, password: string) => Promise<{ error: any }>
   signOut: () => Promise<void>
@@ -135,6 +136,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     profile,
     session,
     loading,
+    supabase,
     signUp,
     signIn,
     signOut,
