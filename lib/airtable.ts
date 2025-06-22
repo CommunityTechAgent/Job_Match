@@ -1,9 +1,20 @@
 import Airtable from 'airtable'
 
-// Initialize Airtable client
-const base = new Airtable({
-  apiKey: process.env.AIRTABLE_TOKEN
-}).base(process.env.AIRTABLE_BASE_ID!)
+let base: Airtable.Base;
+
+function getAirtableBase() {
+  if (!base) {
+    const apiKey = process.env.AIRTABLE_TOKEN;
+    const baseId = process.env.AIRTABLE_BASE_ID;
+
+    if (!apiKey || !baseId) {
+      throw new Error('Airtable API key or Base ID are not defined in environment variables.');
+    }
+
+    base = new Airtable({ apiKey }).base(baseId);
+  }
+  return base;
+}
 
 const tableName = process.env.AIRTABLE_TABLE_NAME || 'Jobs'
 
@@ -62,13 +73,9 @@ export interface SupabaseJob {
 
 // Fetch active jobs from Airtable
 export async function fetchActiveJobs(): Promise<AirtableJobRecord[]> {
-  // Add validation for environment variables
-  if (!process.env.AIRTABLE_TOKEN || !process.env.AIRTABLE_BASE_ID) {
-    throw new Error('Airtable API credentials are not defined in environment variables.')
-  }
-
+  const airtableBase = getAirtableBase();
   try {
-    const records = await base(tableName)
+    const records = await airtableBase(tableName)
       .select({
         filterByFormula: "{Status} = 'Active'",
         sort: [{ field: 'Posted Date', direction: 'desc' }]
@@ -87,8 +94,9 @@ export async function fetchActiveJobs(): Promise<AirtableJobRecord[]> {
 
 // Fetch single job by Airtable ID
 export async function fetchJobByAirtableId(airtableId: string): Promise<AirtableJobRecord | null> {
+  const airtableBase = getAirtableBase();
   try {
-    const records = await base(tableName)
+    const records = await airtableBase(tableName)
       .select({
         filterByFormula: `RECORD_ID() = '${airtableId}'`
       })
@@ -108,8 +116,9 @@ export async function fetchJobByAirtableId(airtableId: string): Promise<Airtable
 
 // Update sync status in Airtable
 export async function updateSyncStatus(airtableId: string, syncStatus: string): Promise<void> {
+  const airtableBase = getAirtableBase();
   try {
-    await base(tableName).update([
+    await airtableBase(tableName).update([
       {
         id: airtableId,
         fields: {

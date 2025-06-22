@@ -18,6 +18,27 @@ export default function DebugPage() {
             }
           </pre>
         </div>
+        <div>
+          <strong>AIRTABLE_TOKEN:</strong>
+          <pre className="bg-gray-100 p-2 rounded mt-1">
+            {process.env.AIRTABLE_TOKEN ? 
+              `${process.env.AIRTABLE_TOKEN.substring(0, 10)}...` : 
+              "NOT SET"
+            }
+          </pre>
+        </div>
+        <div>
+          <strong>AIRTABLE_BASE_ID:</strong>
+          <pre className="bg-gray-100 p-2 rounded mt-1">
+            {process.env.AIRTABLE_BASE_ID || "NOT SET"}
+          </pre>
+        </div>
+        <div>
+          <strong>AIRTABLE_TABLE_NAME:</strong>
+          <pre className="bg-gray-100 p-2 rounded mt-1">
+            {process.env.AIRTABLE_TABLE_NAME || "NOT SET"}
+          </pre>
+        </div>
       </div>
     </div>
   )

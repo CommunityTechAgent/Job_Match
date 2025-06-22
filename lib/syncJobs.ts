@@ -29,14 +29,21 @@ export async function syncJobsFromAirtable(): Promise<SyncResult> {
   try {
     console.log('Starting Airtable to Supabase job sync...')
     
-    // Fetch active jobs from Airtable
-    const airtableJobs = await fetchActiveJobsWithRateLimit()
-    console.log(`Found ${airtableJobs.length} active jobs in Airtable`)
+    let airtableJobs
+    try {
+      airtableJobs = await fetchActiveJobsWithRateLimit()
+      console.log(`Found ${airtableJobs.length} active jobs in Airtable`)
+    } catch (error) {
+      throw new Error(`Failed to fetch from Airtable: ${error instanceof Error ? error.message : 'Unknown'}`)
+    }
     
-    // Transform Airtable records to Supabase format
-    const supabaseJobs = transformAirtableJobs(airtableJobs)
+    let supabaseJobs
+    try {
+      supabaseJobs = transformAirtableJobs(airtableJobs)
+    } catch (error) {
+      throw new Error(`Failed to transform Airtable data: ${error instanceof Error ? error.message : 'Unknown'}`)
+    }
     
-    // Process each job
     for (const job of supabaseJobs) {
       result.totalProcessed++
       
@@ -73,14 +80,10 @@ export async function syncJobsFromAirtable(): Promise<SyncResult> {
       } catch (error) {
         const errorMessage = `Error processing job ${job.airtable_id}: ${error instanceof Error ? error.message : 'Unknown error'}`
         result.errors.push(errorMessage)
-        console.error(errorMessage)
+        console.error(errorMessage, error)
         
         // Update sync status to error in Airtable
-        try {
-          await updateSyncStatus(job.airtable_id, 'error')
-        } catch (updateError) {
-          console.error(`Failed to update sync status for ${job.airtable_id}:`, updateError)
-        }
+        await updateSyncStatus(job.airtable_id, 'error').catch(e => console.error(`Failed to update error status for ${job.airtable_id}`, e))
       }
     }
     
