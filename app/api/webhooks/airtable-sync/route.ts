@@ -3,13 +3,13 @@ import { createClient } from '@supabase/supabase-js';
 import { transformAirtableJob } from '@/lib/jobTransformer';
 import type { AirtableJobRecord } from '@/lib/airtable';
 
-// Initialize Supabase client
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL ?? '',
-  process.env.SUPABASE_SERVICE_ROLE_KEY ?? '' // Use the service role key for admin-level access
-);
-
 export async function POST(request: NextRequest) {
+  // Initialize Supabase client inside the handler
+  const supabase = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL ?? '',
+    process.env.SUPABASE_SERVICE_ROLE_KEY ?? ''
+  );
+
   try {
     const payload = await request.json();
 
