@@ -45,6 +45,7 @@ export interface MatchFilters {
   experienceLevel?: string
   remoteOnly?: boolean
   limit?: number
+  search?: string
 }
 
 /**
@@ -105,6 +106,14 @@ export async function getActiveJobsForMatching(filters?: MatchFilters): Promise<
 
   if (filters?.remoteOnly) {
     query = query.eq('remote_friendly', true)
+  }
+
+  // Apply search filter - search across multiple fields
+  if (filters?.search) {
+    const searchTerm = filters.search.toLowerCase()
+    query = query.or(
+      `title.ilike.%${searchTerm}%,company.ilike.%${searchTerm}%,description.ilike.%${searchTerm}%,requirements.ilike.%${searchTerm}%`
+    )
   }
 
   if (filters?.limit) {

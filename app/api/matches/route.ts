@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { supabase } from '@/lib/supabase'
+import { createSupabaseServerClient } from '@/lib/supabase-server'
 import { findJobMatches, getMatchRecommendations, getMatchStatistics, type MatchFilters } from '@/lib/matchingAlgorithm'
 
 export async function GET(request: NextRequest) {
   try {
+    const supabase = createSupabaseServerClient()
     // Get authenticated user
     const { data: { user }, error: authError } = await supabase.auth.getUser()
     
@@ -23,6 +24,7 @@ export async function GET(request: NextRequest) {
     const jobType = searchParams.get('jobType') || undefined
     const experienceLevel = searchParams.get('experienceLevel') || undefined
     const remoteOnly = searchParams.get('remoteOnly') === 'true'
+    const search = searchParams.get('search') || undefined
 
     // Build filters
     const filters: MatchFilters = {
@@ -31,7 +33,8 @@ export async function GET(request: NextRequest) {
       location,
       jobType,
       experienceLevel,
-      remoteOnly
+      remoteOnly,
+      search
     }
 
     let result
@@ -73,6 +76,7 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
+    const supabase = createSupabaseServerClient()
     // Get authenticated user
     const { data: { user }, error: authError } = await supabase.auth.getUser()
     
@@ -91,7 +95,8 @@ export async function POST(request: NextRequest) {
       location: body.location || undefined,
       jobType: body.jobType || undefined,
       experienceLevel: body.experienceLevel || undefined,
-      remoteOnly: body.remoteOnly || false
+      remoteOnly: body.remoteOnly || false,
+      search: body.search || undefined
     }
 
     const result = await findJobMatches(user.id, filters)

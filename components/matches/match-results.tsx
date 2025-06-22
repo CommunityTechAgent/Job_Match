@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { useAuth } from "@/contexts/auth-context"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -16,7 +16,7 @@ import {
   CheckCircle, AlertCircle, Clock, Zap
 } from "lucide-react"
 import { toast } from "sonner"
-import type { JobMatch, MatchResult } from "@/lib/matchingAlgorithm"
+import type { JobMatch } from "@/lib/matchingAlgorithm"
 
 interface MatchResultsProps {
   initialMatches?: JobMatch[]
@@ -33,9 +33,15 @@ export function MatchResults({
 }: MatchResultsProps) {
   const { user } = useAuth()
   const [matches, setMatches] = useState<JobMatch[]>(initialMatches || [])
-  const [matchStats, setMatchStats] = useState<any>(null)
+  const [matchStats, setMatchStats] = useState<{
+    totalJobs: number
+    highMatches: number
+    averageScore: number
+    topSkills: string[]
+  } | null>(null)
   const [loading, setLoading] = useState(false)
   const [filters, setFilters] = useState({
+    search: '',
     minScore: 0,
     location: '',
     jobType: '',
@@ -45,7 +51,7 @@ export function MatchResults({
   })
 
   // Load matches
-  const loadMatches = async (useFilters = false) => {
+  const loadMatches = useCallback(async (useFilters = false) => {
     if (!user) return
 
     setLoading(true)
@@ -53,6 +59,7 @@ export function MatchResults({
       const params = new URLSearchParams()
       
       if (useFilters) {
+        if (filters.search) params.append('search', filters.search)
         if (filters.minScore > 0) params.append('minScore', filters.minScore.toString())
         if (filters.location) params.append('location', filters.location)
         if (filters.jobType) params.append('jobType', filters.jobType)
@@ -80,10 +87,10 @@ export function MatchResults({
     } finally {
       setLoading(false)
     }
-  }
+  }, [user, filters])
 
   // Load match statistics
-  const loadStats = async () => {
+  const loadStats = useCallback(async () => {
     if (!user) return
 
     try {
@@ -96,7 +103,7 @@ export function MatchResults({
     } catch (error) {
       console.error('Error loading stats:', error)
     }
-  }
+  }, [user])
 
   // Load initial data
   useEffect(() => {
@@ -106,7 +113,7 @@ export function MatchResults({
         loadStats()
       }
     }
-  }, [user, initialMatches, showStats])
+  }, [user, initialMatches, showStats, loadMatches, loadStats])
 
   // Apply filters
   const applyFilters = () => {
@@ -116,6 +123,7 @@ export function MatchResults({
   // Reset filters
   const resetFilters = () => {
     setFilters({
+      search: '',
       minScore: 0,
       location: '',
       jobType: '',
@@ -252,6 +260,16 @@ export function MatchResults({
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
               <div className="space-y-2">
+                <Label htmlFor="search">Search Jobs</Label>
+                <Input
+                  id="search"
+                  value={filters.search}
+                  onChange={(e) => setFilters(prev => ({ ...prev, search: e.target.value }))}
+                  placeholder="Search by title, company, skills..."
+                />
+              </div>
+
+              <div className="space-y-2">
                 <Label htmlFor="minScore">Minimum Score</Label>
                 <Input
                   id="minScore"
@@ -277,14 +295,14 @@ export function MatchResults({
               <div className="space-y-2">
                 <Label htmlFor="jobType">Job Type</Label>
                 <Select
-                  value={filters.jobType}
-                  onValueChange={(value) => setFilters(prev => ({ ...prev, jobType: value }))}
+                  value={filters.jobType || 'all'}
+                  onValueChange={(value) => setFilters(prev => ({ ...prev, jobType: value === 'all' ? '' : value }))}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="All types" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">All types</SelectItem>
+                    <SelectItem value="all">All types</SelectItem>
                     <SelectItem value="Full-time">Full-time</SelectItem>
                     <SelectItem value="Part-time">Part-time</SelectItem>
                     <SelectItem value="Contract">Contract</SelectItem>
@@ -292,18 +310,20 @@ export function MatchResults({
                   </SelectContent>
                 </Select>
               </div>
+            </div>
 
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mt-4">
               <div className="space-y-2">
                 <Label htmlFor="experienceLevel">Experience Level</Label>
                 <Select
-                  value={filters.experienceLevel}
-                  onValueChange={(value) => setFilters(prev => ({ ...prev, experienceLevel: value }))}
+                  value={filters.experienceLevel || 'all'}
+                  onValueChange={(value) => setFilters(prev => ({ ...prev, experienceLevel: value === 'all' ? '' : value }))}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="All levels" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">All levels</SelectItem>
+                    <SelectItem value="all">All levels</SelectItem>
                     <SelectItem value="entry">Entry Level</SelectItem>
                     <SelectItem value="mid">Mid Level</SelectItem>
                     <SelectItem value="senior">Senior Level</SelectItem>
@@ -312,9 +332,7 @@ export function MatchResults({
                   </SelectContent>
                 </Select>
               </div>
-            </div>
 
-            <div className="flex items-center gap-4 mt-4">
               <div className="flex items-center space-x-2">
                 <input
                   type="checkbox"
