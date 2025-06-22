@@ -13,9 +13,9 @@ import { FinalCTA } from "@/components/final-cta"
 import { Footer } from "@/components/footer"
 
 export default function HomePage() {
-  const { user, loading } = useAuth()
+  const { user, profile, loading } = useAuth()
 
-  if (loading) {
+  if (loading || (user && profile === undefined)) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-red-500"></div>
@@ -23,7 +23,7 @@ export default function HomePage() {
     )
   }
 
-  if (user) {
+  if (user && profile) {
     return <Dashboard />
   }
 

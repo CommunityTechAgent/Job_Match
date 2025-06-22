@@ -2,485 +2,133 @@
   "master": {
     "tasks": [
       {
-        "id": 1,
+        "id": 11,
         "title": "Update Supabase Jobs Table Schema for Airtable Integration",
         "description": "Enhance the existing jobs table schema in Supabase to support Airtable integration with new fields and indexes.",
-        "details": "1. Connect to Supabase database\n2. Add the following fields to the jobs table:\n   - airtable_id (text): Primary identifier from Airtable\n   - last_sync_date (timestamp): When the job was last synced\n   - sync_status (text): Status of sync (pending, complete, error)\n   - data_source (text): Source of the job data (e.g., 'airtable')\n   - job_type (text): Full-time, part-time, contract, etc.\n   - experience_level (text): Entry, mid, senior level\n   - industry (text): Industry category\n   - department (text): Department within company\n   - remote_friendly (boolean): Whether job is remote-friendly\n   - skills_required (array): Array of required skills\n   - priority (text): Job priority level\n   - expires_date (timestamp): When the job posting expires\n3. Create indexes for:\n   - airtable_id (unique)\n   - last_sync_date\n   - sync_status\n4. Update Row Level Security (RLS) policies to include new fields\n5. Test schema with sample data insertion",
-        "testStrategy": "1. Verify all new fields are created with correct data types\n2. Confirm indexes are properly created\n3. Test RLS policies by accessing data with different user roles\n4. Insert test records with all new fields and verify data integrity\n5. Verify backward compatibility with existing code",
+        "details": "1. Connect to Supabase database\n2. Add the following fields to the jobs table:\n   - airtable_id (text, unique): Primary identifier from Airtable\n   - last_sync_date (timestamp): When the job was last synced\n   - sync_status (text): Status of sync (pending, synced, error)\n   - data_source (text): Source of job data (airtable, manual, etc.)\n   - job_type (text): Full-time, part-time, contract, etc.\n   - experience_level (text): Entry, mid, senior, etc.\n   - industry (text): Industry category\n   - department (text): Department within company\n   - remote_friendly (boolean): Whether job is remote-friendly\n   - skills_required (array): Array of required skills\n   - priority (text): Job priority level\n   - expires_date (timestamp): When job posting expires\n3. Create indexes for:\n   - airtable_id (for fast lookups)\n   - sync_status (for filtering pending/error jobs)\n   - expires_date (for filtering active jobs)\n4. Update Row Level Security (RLS) policies to include new fields\n5. Test schema with sample data insertion",
+        "testStrategy": "1. Verify all new fields are created with correct data types\n2. Test indexes by querying on indexed fields and checking query plans\n3. Validate RLS policies by testing access with different user roles\n4. Insert sample job data with all new fields and verify retrieval\n5. Test uniqueness constraint on airtable_id field",
         "priority": "high",
         "dependencies": [],
         "status": "done",
         "subtasks": []
       },
       {
-        "id": 2,
-        "title": "Create Airtable Base Configuration",
-        "description": "Set up a new Airtable base with appropriate schema for job management and generate API access credentials.",
-        "details": "1. Create a new Airtable account or use existing one\n2. Create a new base named 'JobMatch AI - Job Management'\n3. Set up the Jobs table with the following fields:\n   - Job ID (Formula: CONCATENATE('JOB-', RECORD_ID()))\n   - Title (Single line text)\n   - Company (Single line text)\n   - Location (Single line text)\n   - Job Type (Single select: Full-time, Part-time, Contract, etc.)\n   - Experience Level (Single select: Entry, Mid, Senior)\n   - Salary Min (Currency)\n   - Salary Max (Currency)\n   - Description (Long text)\n   - Requirements (Long text)\n   - Status (Single select: Active, Inactive, Draft)\n   - Posted Date (Date)\n   - Expires Date (Date)\n   - Created By (Single line text)\n   - Last Sync (Date & Time)\n   - Sync Status (Single select: Pending, Complete, Error)\n   - Industry (Single select)\n   - Department (Single select)\n   - Remote Friendly (Checkbox)\n   - Skills Required (Multiple select)\n   - Priority (Single select: Low, Medium, High)\n4. Create the following views:\n   - 'Active Jobs' (Filter: Status = Active, Sort: Posted Date desc)\n   - 'Pending Sync' (Filter: Sync Status = Pending or Error)\n   - 'Expiring Soon' (Filter: Expires Date within next 7 days)\n   - 'By Company' (Grouped by Company field)\n5. Generate Personal Access Token from Airtable account settings\n6. Document base ID, table ID, and API key for integration",
-        "testStrategy": "1. Verify all fields are created with correct data types\n2. Test formula for Job ID generation\n3. Add sample job entries to validate schema\n4. Confirm all views display data correctly\n5. Test API access using the generated token\n6. Verify permissions are set correctly for team access",
+        "id": 12,
+        "title": "Set Up Airtable Base and Schema Configuration",
+        "description": "Create and configure the Airtable base with appropriate schema for job management.",
+        "details": "1. Create new Airtable account or use existing one\n2. Generate Airtable Personal Access Token with appropriate permissions\n3. Create new base named 'JobMatch AI - Job Management'\n4. Set up Jobs table with the following fields:\n   - Job ID (Formula: Auto-number with prefix 'JOB-')\n   - Title (Single line text, required)\n   - Company (Single line text, required)\n   - Location (Single line text, required)\n   - Job Type (Single select: Full-time, Part-time, Contract, etc.)\n   - Experience Level (Single select: Entry, Mid, Senior, etc.)\n   - Salary Min (Currency)\n   - Salary Max (Currency)\n   - Description (Long text)\n   - Requirements (Long text)\n   - Status (Single select: Active, Inactive, Draft)\n   - Posted Date (Date)\n   - Expires Date (Date)\n   - Created By (Single line text)\n   - Last Sync (Date & time)\n   - Sync Status (Single select: Pending, Synced, Error)\n   - Industry (Single select)\n   - Department (Single select)\n   - Remote Friendly (Checkbox)\n   - Skills Required (Multiple select)\n   - Priority (Single select: High, Medium, Low)\n5. Create the following views:\n   - 'Active Jobs' (Status = Active, sorted by Posted Date)\n   - 'Pending Sync' (Sync Status = Pending or Error)\n   - 'Expiring Soon' (Expires Date within 7 days)\n   - 'By Company' (grouped by Company)\n6. Configure base permissions for team access",
+        "testStrategy": "1. Verify all fields are created with correct data types and options\n2. Test formula field for Job ID generation\n3. Create sample job entries to validate field constraints\n4. Verify all views display correct filtered data\n5. Test team access permissions by inviting a test user\n6. Validate API access using the Personal Access Token",
         "priority": "high",
         "dependencies": [],
         "status": "done",
         "subtasks": []
       },
       {
-        "id": 3,
+        "id": 13,
         "title": "Implement Airtable API Integration Library",
-        "description": "Create a library for interacting with the Airtable API, handling authentication, rate limiting, and data fetching.",
-        "details": "1. Create a new file at lib/airtable.js\n2. Set up environment variables:\n   ```\n   AIRTABLE_API_KEY=your_api_key\n   AIRTABLE_BASE_ID=your_base_id\n   AIRTABLE_TABLE_NAME=your_table_name\n   ```\n3. Install Airtable JS client: `npm install airtable`\n4. Initialize Airtable client:\n   ```javascript\n   import Airtable from 'airtable';\n   \n   const base = new Airtable({ apiKey: process.env.AIRTABLE_API_KEY })\n     .base(process.env.AIRTABLE_BASE_ID);\n   \n   const table = base(process.env.AIRTABLE_TABLE_NAME);\n   ```\n5. Implement fetchActiveJobs function with rate limiting:\n   ```javascript\n   export async function fetchActiveJobs() {\n     const jobs = [];\n     let rateLimitDelay = 200; // 5 requests per second max\n     \n     await table.select({\n       filterByFormula: \"{Status} = 'Active'\",\n       sort: [{ field: 'Posted Date', direction: 'desc' }]\n     }).eachPage(\n       async function page(records, fetchNextPage) {\n         // Add delay for rate limiting\n         await new Promise(resolve => setTimeout(resolve, rateLimitDelay));\n         \n         // Process records\n         records.forEach(record => {\n           jobs.push({\n             airtable_id: record.id,\n             ...record.fields\n           });\n         });\n         \n         fetchNextPage();\n       }\n     );\n     \n     return jobs;\n   }\n   ```\n6. Add error handling and retry logic for API failures\n7. Implement functions for creating and updating records",
-        "testStrategy": "1. Test API connection with valid and invalid credentials\n2. Verify rate limiting prevents API throttling\n3. Test fetchActiveJobs with sample data in Airtable\n4. Validate error handling with simulated API failures\n5. Measure performance with large datasets\n6. Test retry logic with network interruptions",
+        "description": "Create a library for interacting with the Airtable API to fetch and manage job data.",
+        "details": "1. Create lib/airtable.js file with the following:\n   - Set up environment variables:\n     - AIRTABLE_API_KEY\n     - AIRTABLE_BASE_ID\n     - AIRTABLE_TABLE_NAME\n   - Initialize Airtable client with API key\n   - Implement fetchActiveJobs() function:\n     ```javascript\n     export async function fetchActiveJobs() {\n       try {\n         const records = [];\n         await base(AIRTABLE_TABLE_NAME)\n           .select({\n             filterByFormula: \"AND({Status} = 'Active', {Expires Date} >= TODAY())\",\n             sort: [{ field: 'Posted Date', direction: 'desc' }]\n           })\n           .eachPage((page, fetchNextPage) => {\n             records.push(...page);\n             fetchNextPage();\n           });\n         return records;\n       } catch (error) {\n         console.error('Error fetching jobs from Airtable:', error);\n         throw error;\n       }\n     }\n     ```\n   - Implement rate limiting handling (5 requests/second)\n   - Add functions for creating, updating, and deleting jobs\n2. Create lib/jobTransformer.js for data transformation:\n   - Implement function to convert Airtable record format to Supabase format\n   - Add data validation and sanitization\n   - Handle field mapping between systems",
+        "testStrategy": "1. Unit test fetchActiveJobs() with mock Airtable responses\n2. Test rate limiting by making rapid sequential requests\n3. Verify error handling by simulating API failures\n4. Test data transformation with various job record formats\n5. Validate field mapping correctness with sample data\n6. Integration test with actual Airtable API using test credentials",
         "priority": "high",
         "dependencies": [
-          2
+          12
         ],
         "status": "done",
-        "subtasks": [
-          {
-            "id": 1,
-            "title": "Environment Setup and Client Initialization",
-            "description": "Set up the project structure and implement the client initialization module with authentication handling",
-            "dependencies": [],
-            "details": "1. Create project structure with src/, tests/, and docs/ directories\n2. Set up package.json with dependencies (axios, dotenv, etc.)\n3. Create configuration module for API keys and base URLs\n4. Implement client initialization function that:\n   - Accepts API key and base URL parameters\n   - Falls back to environment variables if not provided\n   - Validates configuration before proceeding\n   - Returns configured axios instance with authorization headers\n5. Add TypeScript interfaces for configuration options",
-            "status": "done"
-          },
-          {
-            "id": 2,
-            "title": "Data Fetching with Rate Limiting",
-            "description": "Implement core data fetching functionality with rate limiting to prevent API throttling",
-            "dependencies": [
-              1
-            ],
-            "details": "1. Create a rate limiter class that:\n   - Tracks request timestamps\n   - Enforces configurable request limits (default: 5 requests per second)\n   - Implements exponential backoff for retries\n2. Implement base fetching function that:\n   - Wraps API calls with the rate limiter\n   - Handles pagination automatically\n   - Supports filtering and sorting parameters\n   - Returns properly typed responses\n3. Add request queuing mechanism for high-volume operations",
-            "status": "done"
-          },
-          {
-            "id": 3,
-            "title": "Error Handling and Logging",
-            "description": "Implement comprehensive error handling and logging system for API interactions",
-            "dependencies": [
-              1,
-              2
-            ],
-            "details": "1. Create custom error classes for different error types:\n   - AuthenticationError\n   - RateLimitError\n   - NetworkError\n   - ValidationError\n2. Implement error handling middleware that:\n   - Captures and categorizes API errors\n   - Provides meaningful error messages\n   - Logs errors with appropriate severity levels\n   - Supports custom error handlers\n3. Add retry logic for transient errors\n4. Implement logging interface with configurable outputs",
-            "status": "done"
-          },
-          {
-            "id": 4,
-            "title": "CRUD Operations Implementation",
-            "description": "Implement Create, Read, Update, and Delete operations for Airtable records",
-            "dependencies": [
-              1,
-              2,
-              3
-            ],
-            "details": "1. Implement record creation function that:\n   - Validates input data against schema\n   - Supports single and batch record creation\n   - Returns created record IDs and data\n2. Implement record retrieval functions with:\n   - Support for filtering, sorting, and field selection\n   - Single record and collection fetching\n   - Automatic handling of large result sets\n3. Implement update operations with:\n   - Partial and complete record updates\n   - Conditional updates based on field values\n4. Implement delete operations with:\n   - Single and batch record deletion\n   - Soft delete option via field updates\n5. Add transaction-like functionality for related operations",
-            "status": "done"
-          }
-        ]
+        "subtasks": []
       },
       {
-        "id": 4,
-        "title": "Create Job Data Transformer",
-        "description": "Build a utility to transform data between Airtable and Supabase formats, including validation and sanitization.",
-        "details": "1. Create a new file at lib/jobTransformer.js\n2. Implement data transformation functions:\n   ```javascript\n   export function airtableToSupabase(airtableJob) {\n     // Validate required fields\n     if (!airtableJob.Title || !airtableJob.Company || !airtableJob.Location) {\n       throw new Error('Missing required fields');\n     }\n     \n     // Transform and sanitize data\n     return {\n       airtable_id: airtableJob.id,\n       title: sanitizeText(airtableJob.Title),\n       company: sanitizeText(airtableJob.Company),\n       location: sanitizeText(airtableJob.Location),\n       job_type: airtableJob['Job Type'] || null,\n       experience_level: airtableJob['Experience Level'] || null,\n       salary_min: airtableJob['Salary Min'] || null,\n       salary_max: airtableJob['Salary Max'] || null,\n       description: sanitizeHtml(airtableJob.Description || ''),\n       requirements: sanitizeHtml(airtableJob.Requirements || ''),\n       industry: airtableJob.Industry || null,\n       department: airtableJob.Department || null,\n       remote_friendly: Boolean(airtableJob['Remote Friendly']),\n       skills_required: Array.isArray(airtableJob['Skills Required']) \n         ? airtableJob['Skills Required'] \n         : [],\n       priority: airtableJob.Priority || 'medium',\n       posted_date: airtableJob['Posted Date'] || new Date().toISOString(),\n       expires_date: airtableJob['Expires Date'] || null,\n       last_sync_date: new Date().toISOString(),\n       sync_status: 'complete',\n       data_source: 'airtable'\n     };\n   }\n   \n   function sanitizeText(text) {\n     if (!text) return '';\n     return text.trim().replace(/[<>]/g, '');\n   }\n   \n   function sanitizeHtml(html) {\n     if (!html) return '';\n     // Basic HTML sanitization\n     return html\n       .replace(/<script\\b[^<]*(?:(?!<\\/script>)<[^<]*)*<\\/script>/gi, '')\n       .trim();\n   }\n   ```\n3. Add validation functions to ensure data integrity\n4. Implement reverse transformation (Supabase to Airtable) for bidirectional sync",
-        "testStrategy": "1. Test transformation with various Airtable record formats\n2. Verify all fields are correctly mapped\n3. Test with missing required fields to ensure validation works\n4. Verify HTML sanitization removes potentially harmful content\n5. Test with extreme values (very long text, special characters)\n6. Validate bidirectional transformation preserves data integrity",
-        "priority": "medium",
-        "dependencies": [
-          1,
-          3
-        ],
-        "status": "done",
-        "subtasks": [
-          {
-            "id": 1,
-            "title": "Implement Data Validation and Sanitization",
-            "description": "Create robust validation and sanitization mechanisms for job data",
-            "dependencies": [],
-            "details": "Develop input validation rules for all job data fields (title, description, requirements, etc.). Implement HTML sanitization to prevent XSS attacks. Create validation for different data types (strings, dates, numbers, URLs). Handle edge cases like empty fields, malformed data, and special characters. Add error reporting with specific validation failure messages.",
-            "status": "done"
-          },
-          {
-            "id": 2,
-            "title": "Build Core Transformation Logic",
-            "description": "Develop the central transformation engine for converting job data between systems",
-            "dependencies": [
-              1
-            ],
-            "details": "Create a transformation pipeline that handles different data types appropriately. Implement field mapping between source and target systems. Add special handling for complex fields (rich text, nested objects, arrays). Build type coercion for mismatched data types. Implement default values for missing fields. Create logging for transformation steps to aid debugging.",
-            "status": "done"
-          },
-          {
-            "id": 3,
-            "title": "Implement Bidirectional Mapping System",
-            "description": "Create a system that allows data to flow in both directions between systems",
-            "dependencies": [
-              1,
-              2
-            ],
-            "details": "Design a bidirectional mapping configuration system. Implement forward and reverse transformation functions. Create conflict resolution strategies for bidirectional updates. Add versioning support to handle schema changes. Build test cases for round-trip transformations to ensure data integrity. Implement performance optimizations for large datasets.",
-            "status": "done"
-          }
-        ]
-      },
-      {
-        "id": 5,
-        "title": "Implement Basic Job Sync API Endpoint",
-        "description": "Create an API endpoint for manually triggering job synchronization between Airtable and Supabase.",
-        "details": "1. Create a new file at pages/api/jobs/sync.js\n2. Implement protected API route with admin-only access:\n   ```javascript\n   import { createServerSupabaseClient } from '@supabase/auth-helpers-nextjs';\n   import { fetchActiveJobs } from '../../../lib/airtable';\n   import { airtableToSupabase } from '../../../lib/jobTransformer';\n   \n   export default async function handler(req, res) {\n     // Only allow POST method\n     if (req.method !== 'POST') {\n       return res.status(405).json({ error: 'Method not allowed' });\n     }\n     \n     // Initialize Supabase client\n     const supabase = createServerSupabaseClient({ req, res });\n     \n     // Check if user is authenticated and has admin role\n     const { data: { user } } = await supabase.auth.getUser();\n     if (!user) {\n       return res.status(401).json({ error: 'Unauthorized' });\n     }\n     \n     // Check if user has admin role (implement your role check)\n     const { data: profile } = await supabase\n       .from('profiles')\n       .select('role')\n       .eq('id', user.id)\n       .single();\n       \n     if (profile?.role !== 'admin') {\n       return res.status(403).json({ error: 'Forbidden' });\n     }\n     \n     try {\n       // Fetch active jobs from Airtable\n       const airtableJobs = await fetchActiveJobs();\n       \n       // Get existing jobs from Supabase\n       const { data: existingJobs } = await supabase\n         .from('jobs')\n         .select('airtable_id, updated_at')\n         .eq('data_source', 'airtable');\n       \n       // Create lookup map for existing jobs\n       const existingJobMap = {};\n       existingJobs?.forEach(job => {\n         existingJobMap[job.airtable_id] = job.updated_at;\n       });\n       \n       // Track sync results\n       const results = {\n         added: 0,\n         updated: 0,\n         unchanged: 0,\n         errors: []\n       };\n       \n       // Process each Airtable job\n       for (const airtableJob of airtableJobs) {\n         try {\n           const supabaseJob = airtableToSupabase(airtableJob);\n           \n           if (!existingJobMap[airtableJob.id]) {\n             // Insert new job\n             await supabase.from('jobs').insert([supabaseJob]);\n             results.added++;\n           } else {\n             // Update existing job\n             await supabase\n               .from('jobs')\n               .update(supabaseJob)\n               .eq('airtable_id', airtableJob.id);\n             results.updated++;\n           }\n         } catch (error) {\n           results.errors.push({\n             job: airtableJob.id,\n             error: error.message\n           });\n         }\n       }\n       \n       return res.status(200).json(results);\n     } catch (error) {\n       console.error('Sync error:', error);\n       return res.status(500).json({ error: error.message });\n     }\n   }\n   ```\n3. Add logging for sync operations\n4. Implement error handling and reporting",
-        "testStrategy": "1. Test API endpoint with authenticated admin user\n2. Verify unauthorized users cannot access the endpoint\n3. Test with mock Airtable data to verify insert/update logic\n4. Validate error handling with simulated failures\n5. Test with large datasets to ensure performance\n6. Verify correct reporting of sync results",
+        "id": 14,
+        "title": "Build Basic Airtable to Supabase Sync System",
+        "description": "Create an API endpoint for manually syncing jobs from Airtable to Supabase.",
+        "details": "1. Create pages/api/jobs/sync.js with the following functionality:\n   - Implement protected route (admin only) using authentication middleware\n   - Fetch all active jobs from Airtable using fetchActiveJobs()\n   - Query existing jobs from Supabase for comparison\n   - Compare jobs to identify new, updated, and unchanged records\n   - Insert new jobs and update modified jobs in Supabase\n   - Update sync status and timestamp in both systems\n   - Return sync summary (added, updated, unchanged, errors)\n2. Implement error handling and logging:\n   - Catch and log API errors\n   - Track individual job sync failures\n   - Implement retry logic for failed jobs\n3. Add transaction support for batch operations\n4. Create basic admin UI component for triggering sync:\n   ```javascript\n   function SyncButton() {\n     const [isLoading, setIsLoading] = useState(false);\n     const [result, setResult] = useState(null);\n     \n     const handleSync = async () => {\n       setIsLoading(true);\n       try {\n         const response = await fetch('/api/jobs/sync', { method: 'POST' });\n         const data = await response.json();\n         setResult(data);\n       } catch (error) {\n         console.error('Sync failed:', error);\n         setResult({ error: error.message });\n       } finally {\n         setIsLoading(false);\n       }\n     };\n     \n     return (\n       <div>\n         <button \n           onClick={handleSync} \n           disabled={isLoading}\n           className=\"bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded\"\n         >\n           {isLoading ? 'Syncing...' : 'Sync Jobs from Airtable'}\n         </button>\n         {result && <pre>{JSON.stringify(result, null, 2)}</pre>}\n       </div>\n     );\n   }\n   ```",
+        "testStrategy": "1. Test protected route access with authenticated and unauthenticated requests\n2. Verify sync process with test data in both systems\n3. Test error handling by simulating API failures\n4. Validate transaction rollback on partial failures\n5. Test sync summary accuracy with various scenarios (new jobs, updates, no changes)\n6. Verify UI component renders correctly and handles loading/error states\n7. End-to-end test of full sync process with real data",
         "priority": "high",
         "dependencies": [
-          1,
-          3,
-          4
+          11,
+          13
         ],
-        "status": "done",
-        "subtasks": [
-          {
-            "id": 1,
-            "title": "Implement Authentication and Authorization",
-            "description": "Set up authentication middleware and role-based access control for the job sync API endpoint",
-            "dependencies": [],
-            "details": "1. Create middleware to verify JWT tokens from incoming requests\n2. Implement role-based access control to ensure only admin users can trigger job syncs\n3. Set up rate limiting to prevent abuse of the endpoint\n4. Add logging for authentication attempts and failures\n5. Create unit tests for authentication and authorization logic",
-            "status": "done"
-          },
-          {
-            "id": 2,
-            "title": "Develop Airtable Data Fetching Module",
-            "description": "Create a module to fetch job data from Airtable API with proper error handling and pagination",
-            "dependencies": [
-              1
-            ],
-            "details": "1. Set up Airtable API client with proper credentials\n2. Implement pagination to handle large datasets\n3. Create data transformation functions to normalize Airtable response format\n4. Add caching mechanism to reduce API calls\n5. Implement retry logic for failed API requests\n6. Add comprehensive logging for debugging",
-            "status": "done"
-          },
-          {
-            "id": 3,
-            "title": "Build Data Comparison Logic",
-            "description": "Implement logic to compare fetched Airtable data with existing Supabase records to identify changes",
-            "dependencies": [
-              2
-            ],
-            "details": "1. Query existing job records from Supabase\n2. Create efficient comparison algorithm to identify new, updated, and deleted records\n3. Generate detailed change logs for auditing purposes\n4. Implement checksums or other mechanisms to quickly identify unchanged records\n5. Add unit tests for comparison logic with various test cases",
-            "status": "done"
-          },
-          {
-            "id": 4,
-            "title": "Implement Database Operations",
-            "description": "Create functions to handle insert, update, and delete operations in Supabase based on comparison results",
-            "dependencies": [
-              3
-            ],
-            "details": "1. Implement transaction management to ensure data integrity\n2. Create batch processing for better performance with large datasets\n3. Add validation before database operations\n4. Implement conflict resolution strategies\n5. Create rollback mechanisms for failed operations\n6. Add detailed logging for all database operations",
-            "status": "done"
-          },
-          {
-            "id": 5,
-            "title": "Develop Error Handling and Reporting System",
-            "description": "Implement comprehensive error handling, monitoring, and reporting for the sync process",
-            "dependencies": [
-              4
-            ],
-            "details": "1. Create custom error classes for different failure scenarios\n2. Implement detailed error logging with context information\n3. Set up notification system for critical failures (email/Slack)\n4. Create a dashboard for sync statistics and error rates\n5. Implement partial success handling to report on specific failed records\n6. Add documentation for troubleshooting common errors",
-            "status": "done"
-          }
-        ]
+        "status": "pending",
+        "subtasks": []
       },
       {
-        "id": 6,
+        "id": 15,
         "title": "Implement File Upload System for Resumes",
-        "description": "Connect the resume upload UI to Supabase Storage with validation, progress indicators, and secure access.",
-        "details": "1. Configure Supabase Storage bucket for resumes:\n   - Create a private bucket named 'resumes'\n   - Set up RLS policies to restrict access to user's own files\n2. Install required packages: `npm install uuid`\n3. Create a ResumeUpload component:\n   ```jsx\n   import { useState } from 'react';\n   import { v4 as uuidv4 } from 'uuid';\n   import { useSupabaseClient, useUser } from '@supabase/auth-helpers-react';\n   \n   export default function ResumeUpload() {\n     const supabase = useSupabaseClient();\n     const user = useUser();\n     const [file, setFile] = useState(null);\n     const [uploading, setUploading] = useState(false);\n     const [progress, setProgress] = useState(0);\n     const [error, setError] = useState(null);\n     const [fileUrl, setFileUrl] = useState(null);\n     \n     const allowedTypes = ['application/pdf', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];\n     const maxSize = 5 * 1024 * 1024; // 5MB\n     \n     const handleFileChange = (e) => {\n       const selectedFile = e.target.files[0];\n       setError(null);\n       \n       // Validate file type\n       if (!selectedFile) return;\n       if (!allowedTypes.includes(selectedFile.type)) {\n         setError('File must be PDF or DOCX format');\n         return;\n       }\n       \n       // Validate file size\n       if (selectedFile.size > maxSize) {\n         setError('File size must be less than 5MB');\n         return;\n       }\n       \n       setFile(selectedFile);\n     };\n     \n     const handleUpload = async () => {\n       if (!file || !user) return;\n       \n       try {\n         setUploading(true);\n         setProgress(0);\n         \n         // Generate unique filename\n         const fileExt = file.name.split('.').pop();\n         const fileName = `${user.id}/${uuidv4()}.${fileExt}`;\n         \n         // Upload file with progress tracking\n         const { error: uploadError, data } = await supabase.storage\n           .from('resumes')\n           .upload(fileName, file, {\n             cacheControl: '3600',\n             upsert: false,\n             onProgress: (progress) => {\n               setProgress(Math.round((progress.loaded / progress.total) * 100));\n             }\n           });\n           \n         if (uploadError) throw uploadError;\n         \n         // Create signed URL for preview\n         const { data: { signedUrl } } = await supabase.storage\n           .from('resumes')\n           .createSignedUrl(fileName, 3600); // 1 hour expiry\n           \n         setFileUrl(signedUrl);\n         \n         // Update user profile with resume reference\n         await supabase\n           .from('profiles')\n           .update({ \n             resume_path: fileName,\n             resume_updated_at: new Date().toISOString()\n           })\n           .eq('id', user.id);\n           \n         setUploading(false);\n       } catch (error) {\n         console.error('Upload error:', error);\n         setError(error.message);\n         setUploading(false);\n       }\n     };\n     \n     return (\n       <div className=\"resume-upload\">\n         <h3>Upload Your Resume</h3>\n         <p>Upload PDF or DOCX file (max 5MB)</p>\n         \n         <input \n           type=\"file\" \n           accept=\".pdf,.docx,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document\" \n           onChange={handleFileChange} \n           disabled={uploading}\n         />\n         \n         {error && <p className=\"error\">{error}</p>}\n         \n         {file && !uploading && (\n           <button onClick={handleUpload}>Upload Resume</button>\n         )}\n         \n         {uploading && (\n           <div className=\"progress\">\n             <div className=\"progress-bar\" style={{ width: `${progress}%` }}></div>\n             <span>{progress}%</span>\n           </div>\n         )}\n         \n         {fileUrl && (\n           <div className=\"preview\">\n             <p>Resume uploaded successfully!</p>\n             <a href={fileUrl} target=\"_blank\" rel=\"noopener noreferrer\">\n               Preview Resume\n             </a>\n           </div>\n         )}\n       </div>\n     );\n   }\n   ```\n4. Add the component to the profile page\n5. Implement file deletion functionality for replacing resumes",
-        "testStrategy": "1. Test file upload with valid PDF and DOCX files\n2. Verify file type validation rejects invalid formats\n3. Test file size validation with files >5MB\n4. Verify progress indicator works correctly\n5. Test signed URL generation and access\n6. Verify RLS policies prevent unauthorized access to files\n7. Test file replacement and deletion functionality",
+        "description": "Connect the resume upload UI to Supabase Storage and implement file validation and processing.",
+        "details": "1. Set up Supabase Storage bucket for resumes:\n   - Create 'resumes' bucket with private access\n   - Configure RLS policies for user-specific access\n2. Implement file upload component:\n   ```javascript\n   function ResumeUpload() {\n     const [file, setFile] = useState(null);\n     const [uploading, setUploading] = useState(false);\n     const [progress, setProgress] = useState(0);\n     const [error, setError] = useState(null);\n     const { user } = useAuth();\n     \n     const handleFileChange = (e) => {\n       const selectedFile = e.target.files[0];\n       if (validateFile(selectedFile)) {\n         setFile(selectedFile);\n         setError(null);\n       }\n     };\n     \n     const validateFile = (file) => {\n       // Check file type (PDF/DOCX)\n       const validTypes = ['application/pdf', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];\n       if (!validTypes.includes(file.type)) {\n         setError('File must be PDF or DOCX format');\n         return false;\n       }\n       \n       // Check file size (5MB limit)\n       if (file.size > 5 * 1024 * 1024) {\n         setError('File size must be less than 5MB');\n         return false;\n       }\n       \n       return true;\n     };\n     \n     const uploadFile = async () => {\n       if (!file || !user) return;\n       \n       setUploading(true);\n       setProgress(0);\n       \n       try {\n         const fileExt = file.name.split('.').pop();\n         const fileName = `${user.id}-${Date.now()}.${fileExt}`;\n         const filePath = `${user.id}/${fileName}`;\n         \n         // Upload to Supabase Storage\n         const { data, error } = await supabase.storage\n           .from('resumes')\n           .upload(filePath, file, {\n             cacheControl: '3600',\n             upsert: true,\n             onUploadProgress: (progress) => {\n               setProgress(Math.round((progress.loaded / progress.total) * 100));\n             }\n           });\n           \n         if (error) throw error;\n         \n         // Update user profile with resume URL\n         const { error: updateError } = await supabase\n           .from('profiles')\n           .update({ resume_url: filePath, resume_updated_at: new Date() })\n           .eq('id', user.id);\n           \n         if (updateError) throw updateError;\n         \n         // Success\n         setFile(null);\n       } catch (error) {\n         console.error('Error uploading file:', error);\n         setError(error.message);\n       } finally {\n         setUploading(false);\n       }\n     };\n     \n     return (\n       <div className=\"p-4 border rounded\">\n         <h3 className=\"text-lg font-semibold mb-2\">Upload Resume</h3>\n         <input \n           type=\"file\" \n           accept=\".pdf,.docx,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document\" \n           onChange={handleFileChange} \n           disabled={uploading}\n         />\n         {error && <p className=\"text-red-500 text-sm mt-1\">{error}</p>}\n         {file && (\n           <div className=\"mt-2\">\n             <p>{file.name} ({Math.round(file.size / 1024)} KB)</p>\n             <button \n               onClick={uploadFile} \n               disabled={uploading}\n               className=\"bg-blue-500 hover:bg-blue-700 text-white font-bold py-1 px-3 rounded mt-2\"\n             >\n               {uploading ? `Uploading (${progress}%)` : 'Upload'}\n             </button>\n             {uploading && (\n               <div className=\"w-full bg-gray-200 rounded-full h-2.5 mt-2\">\n                 <div className=\"bg-blue-600 h-2.5 rounded-full\" style={{ width: `${progress}%` }}></div>\n               </div>\n             )}\n           </div>\n         )}\n       </div>\n     );\n   }\n   ```\n3. Implement secure file access with signed URLs:\n   - Create API endpoint for generating temporary signed URLs\n   - Implement access control based on user ownership\n4. Add file preview functionality for uploaded resumes",
+        "testStrategy": "1. Test file validation with various file types and sizes\n2. Verify upload process with progress tracking\n3. Test error handling for invalid files and upload failures\n4. Validate RLS policies by attempting access to other users' files\n5. Test signed URL generation and expiration\n6. Verify file preview functionality for PDF and DOCX formats\n7. Test mobile responsiveness of upload interface",
         "priority": "medium",
         "dependencies": [],
-        "status": "done",
-        "subtasks": [
-          {
-            "id": 1,
-            "title": "Configure Supabase Storage for Resume Files",
-            "description": "Set up Supabase Storage bucket specifically for resume files with appropriate configuration and initial security policies.",
-            "dependencies": [],
-            "details": "1. Create a dedicated 'resumes' bucket in Supabase Storage\n2. Configure CORS settings to allow uploads from the application domain\n3. Set up initial RLS (Row Level Security) policies for the bucket\n4. Create folder structure within the bucket (e.g., by user ID or application status)\n5. Test bucket accessibility and permissions using the Supabase client\n6. Document the storage structure and access patterns",
-            "status": "done"
-          },
-          {
-            "id": 2,
-            "title": "Implement File Validation and Processing Logic",
-            "description": "Create validation logic for resume files including file type checking, size limits, and content validation.",
-            "dependencies": [
-              1
-            ],
-            "details": "1. Define allowed file types (PDF, DOCX, etc.) and size limits (e.g., 5MB max)\n2. Implement client-side validation to check file type, size, and basic structure\n3. Create server-side validation functions as a secondary security measure\n4. Add virus/malware scanning integration if required\n5. Implement file naming convention and duplicate handling logic\n6. Create error handling and user feedback for validation failures",
-            "status": "done"
-          },
-          {
-            "id": 3,
-            "title": "Build Upload Component with Progress Tracking",
-            "description": "Develop a React component for file uploads with drag-and-drop functionality, file selection, and real-time progress tracking.",
-            "dependencies": [
-              1,
-              2
-            ],
-            "details": "1. Create a drag-and-drop zone component with visual feedback\n2. Implement file selection via button click alternative\n3. Add progress bar component that displays upload percentage\n4. Integrate with Supabase client for chunked uploads\n5. Implement cancel upload functionality\n6. Add success/failure states with appropriate user feedback\n7. Make component responsive for different screen sizes\n8. Include accessibility features (keyboard navigation, screen reader support)",
-            "status": "done"
-          },
-          {
-            "id": 4,
-            "title": "Implement File Management and Security Policies",
-            "description": "Create functionality for resume file management including viewing, replacing, deleting files, and implement comprehensive security policies.",
-            "dependencies": [
-              1,
-              2,
-              3
-            ],
-            "details": "1. Develop UI for viewing uploaded resume files\n2. Implement file replacement/versioning functionality\n3. Create file deletion with confirmation\n4. Generate secure, time-limited URLs for resume viewing\n5. Implement detailed RLS policies based on user roles (applicant, recruiter, admin)\n6. Add audit logging for file operations\n7. Create backup and recovery procedures\n8. Implement file retention policies based on business requirements",
-            "status": "done"
-          }
-        ]
+        "status": "pending",
+        "subtasks": []
       },
       {
-        "id": 7,
-        "title": "Implement Simple Keyword-Based Matching Algorithm",
-        "description": "Build a basic job matching system that compares user skills and profile data with Airtable job listings.",
-        "details": "1. Create a new file at lib/matchingAlgorithm.js\n2. Implement keyword matching function:\n   ```javascript\n   export async function findMatches(supabase, userId, limit = 10) {\n     // Get user profile with skills\n     const { data: profile, error: profileError } = await supabase\n       .from('profiles')\n       .select('skills, location, experience_level')\n       .eq('id', userId)\n       .single();\n       \n     if (profileError) throw profileError;\n     \n     // Get active jobs\n     const { data: jobs, error: jobsError } = await supabase\n       .from('jobs')\n       .select('*')\n       .eq('sync_status', 'complete')\n       .order('posted_date', { ascending: false });\n       \n     if (jobsError) throw jobsError;\n     \n     // Calculate match scores\n     const scoredJobs = jobs.map(job => {\n       let score = 0;\n       const matchReasons = [];\n       \n       // Skills matching (highest weight)\n       if (profile.skills && job.skills_required) {\n         const userSkills = new Set(profile.skills.map(s => s.toLowerCase()));\n         const jobSkills = new Set(job.skills_required.map(s => s.toLowerCase()));\n         \n         // Calculate skills overlap\n         const matchingSkills = [];\n         jobSkills.forEach(skill => {\n           if (userSkills.has(skill)) {\n             matchingSkills.push(skill);\n           }\n         });\n         \n         const skillsScore = jobSkills.size > 0 \n           ? (matchingSkills.length / jobSkills.size) * 50 \n           : 0;\n           \n         score += skillsScore;\n         \n         if (matchingSkills.length > 0) {\n           matchReasons.push(`Matched ${matchingSkills.length} required skills: ${matchingSkills.join(', ')}`);\n         }\n       }\n       \n       // Location matching\n       if (profile.location && job.location) {\n         // Simple string matching for now\n         if (job.location.toLowerCase().includes(profile.location.toLowerCase()) ||\n             profile.location.toLowerCase().includes(job.location.toLowerCase())) {\n           score += 20;\n           matchReasons.push(`Location match: ${job.location}`);\n         }\n       }\n       \n       // Experience level matching\n       if (profile.experience_level && job.experience_level) {\n         if (profile.experience_level === job.experience_level) {\n           score += 15;\n           matchReasons.push(`Experience level match: ${job.experience_level}`);\n         }\n       }\n       \n       // Remote friendly bonus\n       if (job.remote_friendly) {\n         score += 10;\n         matchReasons.push('Remote-friendly position');\n       }\n       \n       // Recent job bonus\n       const daysSincePosted = Math.floor((new Date() - new Date(job.posted_date)) / (1000 * 60 * 60 * 24));\n       if (daysSincePosted < 7) {\n         score += 5;\n         matchReasons.push('Recently posted');\n       }\n       \n       return {\n         ...job,\n         match_score: Math.min(100, Math.round(score)),\n         match_reasons: matchReasons\n       };\n     });\n     \n     // Sort by match score and limit results\n     return scoredJobs\n       .sort((a, b) => b.match_score - a.match_score)\n       .slice(0, limit);\n   }\n   ```\n3. Create an API endpoint at pages/api/matches/index.js to expose the matching functionality\n4. Implement a match results display component for the dashboard",
-        "testStrategy": "1. Test with various user profiles and job combinations\n2. Verify scoring algorithm correctly prioritizes skill matches\n3. Test with edge cases (no skills, all skills matching)\n4. Validate match reasons are correctly generated\n5. Test performance with large datasets\n6. Verify sorting and limiting of results works correctly",
+        "id": 16,
+        "title": "Enhance Profile Management System",
+        "description": "Improve the user profile system with image upload, comprehensive validation, and skills management.",
+        "details": "1. Add profile image upload functionality:\n   - Configure Supabase Storage for profile images\n   - Implement image cropping and resizing\n   - Add avatar preview and selection UI\n2. Enhance profile data structure in Supabase:\n   - Add missing fields: bio, headline, education, experience_years\n   - Create skills junction table for many-to-many relationship\n3. Implement comprehensive form validation:\n   - Required fields validation\n   - Format validation for email, phone, etc.\n   - Character limits for text fields\n4. Create skills management interface:\n   - Implement skills search and selection component\n   - Add skill level rating (beginner, intermediate, expert)\n   - Enable adding/removing skills\n   - Store skills in normalized format\n5. Add profile completeness indicator:\n   - Calculate percentage based on filled fields\n   - Show visual progress indicator\n   - Provide suggestions for improving profile\n6. Implement profile data persistence:\n   - Auto-save functionality for form fields\n   - Optimistic UI updates with error recovery\n   - Loading states for async operations",
+        "testStrategy": "1. Test profile image upload with various image formats and sizes\n2. Verify form validation with valid and invalid inputs\n3. Test skills management functionality (add, remove, update)\n4. Validate data persistence across page refreshes\n5. Test profile completeness calculation with various scenarios\n6. Verify auto-save functionality with network interruptions\n7. Test UI responsiveness on mobile devices\n8. Validate accessibility compliance with screen readers",
+        "priority": "medium",
+        "dependencies": [],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 17,
+        "title": "Implement Simple Job Matching Algorithm",
+        "description": "Build a basic keyword-based matching system using Airtable jobs and user profiles.",
+        "details": "1. Create matching algorithm in lib/matching.js:\n   ```javascript\n   export function scoreJobMatch(job, userProfile) {\n     let score = 0;\n     const maxScore = 100;\n     \n     // Skills matching (50% of score)\n     const userSkills = new Set(userProfile.skills.map(s => s.name.toLowerCase()));\n     const jobSkills = new Set(job.skills_required.map(s => s.toLowerCase()));\n     \n     // Calculate skills overlap\n     let matchedSkills = 0;\n     if (jobSkills.size > 0) {\n       for (const skill of userSkills) {\n         if (jobSkills.has(skill)) matchedSkills++;\n       }\n       score += (matchedSkills / jobSkills.size) * 50;\n     } else {\n       // No skills specified, give partial score\n       score += 25;\n     }\n     \n     // Location matching (20% of score)\n     if (job.remote_friendly) {\n       // Remote jobs get full location score\n       score += 20;\n     } else if (userProfile.location) {\n       // Simple location matching (city or state)\n       const jobLocation = job.location.toLowerCase();\n       const userLocation = userProfile.location.toLowerCase();\n       \n       if (jobLocation.includes(userLocation) || userLocation.includes(jobLocation)) {\n         score += 20;\n       } else {\n         // Partial match for same state/region\n         const jobState = extractState(jobLocation);\n         const userState = extractState(userLocation);\n         if (jobState && userState && jobState === userState) {\n           score += 10;\n         }\n       }\n     }\n     \n     // Experience level matching (15% of score)\n     const experienceLevels = {\n       'entry': 0,\n       'junior': 1,\n       'mid': 2,\n       'senior': 3,\n       'lead': 4,\n       'executive': 5\n     };\n     \n     const userLevel = experienceLevels[userProfile.experience_level] || 0;\n     const jobLevel = experienceLevels[job.experience_level] || 0;\n     \n     // Exact match or one level difference\n     if (userLevel === jobLevel) {\n       score += 15;\n     } else if (Math.abs(userLevel - jobLevel) === 1) {\n       score += 10;\n     } else if (Math.abs(userLevel - jobLevel) === 2) {\n       score += 5;\n     }\n     \n     // Job type preference matching (15% of score)\n     if (userProfile.job_type_preference === job.job_type) {\n       score += 15;\n     } else if (!userProfile.job_type_preference) {\n       // No preference specified\n       score += 7.5;\n     }\n     \n     // Return normalized score and match details\n     return {\n       score: Math.min(Math.round(score), 100),\n       matchedSkills,\n       totalJobSkills: jobSkills.size,\n       locationMatch: score >= 10,\n       experienceMatch: userLevel === jobLevel\n     };\n   }\n   \n   function extractState(location) {\n     // Simple state extraction logic\n     // Could be enhanced with proper location parsing\n     const states = ['AL', 'AK', 'AZ', /* other state codes */];\n     for (const state of states) {\n       if (location.includes(` ${state}`) || location.endsWith(`, ${state}`)) {\n         return state;\n       }\n     }\n     return null;\n   }\n   ```\n2. Implement API endpoint for job matching:\n   - Create pages/api/matches/index.js\n   - Fetch user profile and skills\n   - Retrieve active jobs from Supabase\n   - Apply matching algorithm to each job\n   - Return sorted matches with scores\n3. Create match results display interface:\n   - Show match score as percentage\n   - Highlight matching skills\n   - Display match reasoning\n   - Add apply/save actions\n4. Implement basic filtering capabilities:\n   - Filter by minimum match score\n   - Filter by job type\n   - Filter by location\n   - Sort by match score, date, etc.",
+        "testStrategy": "1. Unit test matching algorithm with various profile and job combinations\n2. Verify score calculation accuracy for different scenarios\n3. Test edge cases (empty skills, no location, etc.)\n4. Validate API endpoint with authenticated and unauthenticated requests\n5. Test filtering functionality with different criteria\n6. Verify sorting options work correctly\n7. Test match display interface with high and low scoring matches\n8. Validate performance with large number of jobs",
         "priority": "medium",
         "dependencies": [
-          1,
-          4
+          14,
+          16
         ],
-        "status": "done",
-        "subtasks": [
-          {
-            "id": 1,
-            "title": "Implement User Profile Data Retrieval",
-            "description": "Create functionality to retrieve and process user profile data for the job matching algorithm",
-            "dependencies": [],
-            "details": "1. Design a data model for user profiles including skills, experience, education, preferences, and location\n2. Implement API endpoints to fetch user profile data from the database\n3. Create data validation and normalization functions to ensure consistent data format\n4. Implement caching mechanism for frequently accessed profiles to improve performance\n5. Add error handling for missing or incomplete user data",
-            "status": "done"
-          },
-          {
-            "id": 2,
-            "title": "Implement Job Data Retrieval",
-            "description": "Create functionality to retrieve and process job listing data for the matching algorithm",
-            "dependencies": [],
-            "details": "1. Design a data model for job listings including required skills, experience level, location, and company information\n2. Implement API endpoints to fetch job listing data from the database\n3. Create data validation and normalization functions for job data\n4. Implement filtering capabilities to narrow down potential matches based on basic criteria\n5. Add indexing for efficient job data retrieval based on common search parameters",
-            "status": "done"
-          },
-          {
-            "id": 3,
-            "title": "Develop Scoring Algorithm Implementation",
-            "description": "Implement the core scoring algorithm that matches users with jobs based on multiple factors",
-            "dependencies": [
-              1,
-              2
-            ],
-            "details": "1. Implement skills matching with weighted scoring (exact matches: 100%, related skills: 50-80%)\n2. Create experience level scoring (perfect match: 100%, within 1-2 years: 80%, etc.)\n3. Implement location-based scoring using distance calculations (same city: 100%, nearby: 70%, remote: variable)\n4. Add education relevance scoring based on field of study and degree level\n5. Implement company/industry preference matching\n6. Create a composite scoring function that combines all factors with appropriate weights\n7. Add performance optimization for handling large datasets",
-            "status": "done"
-          },
-          {
-            "id": 4,
-            "title": "Implement Match Reason Generation and Results Presentation",
-            "description": "Create functionality to generate explanations for matches and present results to users",
-            "dependencies": [
-              3
-            ],
-            "details": "1. Implement logic to identify top 3-5 reasons for each match based on highest scoring factors\n2. Create natural language templates for explaining match reasons (e.g., \"You have 8/10 required skills\")\n3. Develop sorting and filtering options for match results\n4. Implement pagination for match results with configurable page size\n5. Create data visualization components to highlight match strength across different categories\n6. Add personalization options for users to adjust match importance factors\n7. Implement feedback mechanism to improve algorithm based on user interactions with matches",
-            "status": "done"
-          }
-        ]
+        "status": "pending",
+        "subtasks": []
       },
       {
-        "id": 8,
-        "title": "Implement Basic Email Notification System",
-        "description": "Set up email service integration with Resend.com to send job match notifications to users.",
-        "details": "1. Sign up for Resend.com and get API key\n2. Install required package: `npm install resend`\n3. Set up environment variable: `RESEND_API_KEY=your_api_key`\n4. Create a new file at lib/emailService.js:\n   ```javascript\n   import { Resend } from 'resend';\n   \n   const resend = new Resend(process.env.RESEND_API_KEY);\n   const FROM_EMAIL = 'notifications@jobmatchai.com';\n   \n   export async function sendMatchNotification(user, matches) {\n     if (!user.email || matches.length === 0) return null;\n     \n     // Get top 3 matches\n     const topMatches = matches.slice(0, 3);\n     \n     // Generate match HTML\n     const matchesHtml = topMatches.map(match => `\n       <div style=\"margin-bottom: 20px; padding: 15px; border: 1px solid #e0e0e0; border-radius: 5px;\">\n         <h3 style=\"margin-top: 0;\">${match.title} at ${match.company}</h3>\n         <p><strong>Location:</strong> ${match.location}</p>\n         <p><strong>Match Score:</strong> ${match.match_score}%</p>\n         <p><strong>Why this matches you:</strong></p>\n         <ul>\n           ${match.match_reasons.map(reason => `<li>${reason}</li>`).join('')}\n         </ul>\n         <a href=\"${process.env.NEXT_PUBLIC_APP_URL}/jobs/${match.id}\" style=\"display: inline-block; padding: 10px 15px; background-color: #0F172A; color: white; text-decoration: none; border-radius: 5px;\">View Job</a>\n       </div>\n     `).join('');\n     \n     // Send email\n     try {\n       const { data, error } = await resend.emails.send({\n         from: FROM_EMAIL,\n         to: user.email,\n         subject: `${topMatches.length} New Job Matches for You`,\n         html: `\n           <div style=\"font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;\">\n             <h2>Your Latest Job Matches</h2>\n             <p>Hello ${user.name || 'there'},</p>\n             <p>We've found ${topMatches.length} new job matches that align with your profile:</p>\n             \n             ${matchesHtml}\n             \n             <p><a href=\"${process.env.NEXT_PUBLIC_APP_URL}/dashboard\">View all matches on your dashboard</a></p>\n             \n             <hr style=\"margin: 30px 0;\">\n             <p style=\"font-size: 12px; color: #666;\">\n               You're receiving this email because you signed up for JobMatch AI.\n               <br>\n               <a href=\"${process.env.NEXT_PUBLIC_APP_URL}/settings/notifications\">Manage email preferences</a> or <a href=\"${process.env.NEXT_PUBLIC_APP_URL}/unsubscribe?email=${encodeURIComponent(user.email)}\">unsubscribe</a>.\n             </p>\n           </div>\n         `\n       });\n       \n       if (error) throw error;\n       return data;\n     } catch (error) {\n       console.error('Email send error:', error);\n       throw error;\n     }\n   }\n   ```\n5. Create an API endpoint at pages/api/notifications/send-matches.js for triggering notifications\n6. Implement unsubscribe functionality at pages/unsubscribe.js",
-        "testStrategy": "1. Test email sending with valid user and match data\n2. Verify email formatting and content is correct\n3. Test with various match scenarios (high/low scores, different reasons)\n4. Verify links in emails work correctly\n5. Test unsubscribe functionality\n6. Verify error handling for failed email sends",
+        "id": 18,
+        "title": "Set Up Basic Email Notification System",
+        "description": "Implement email service integration with Resend.com and create notification templates for job matches.",
+        "details": "1. Set up Resend.com integration:\n   - Create Resend.com account\n   - Generate API key\n   - Configure environment variables (RESEND_API_KEY)\n2. Create email service library (lib/email.js):\n   ```javascript\n   import { Resend } from 'resend';\n   \n   const resend = new Resend(process.env.RESEND_API_KEY);\n   \n   export async function sendJobMatchEmail(user, matches) {\n     if (!user.email) throw new Error('User email is required');\n     \n     // Only send top 5 matches\n     const topMatches = matches.slice(0, 5);\n     \n     // Generate match HTML\n     const matchesHtml = topMatches.map(match => `\n       <div style=\"margin-bottom: 20px; padding: 15px; border: 1px solid #e2e8f0; border-radius: 5px;\">\n         <h3 style=\"margin-top: 0; color: #1a202c;\">${match.job.title} at ${match.job.company}</h3>\n         <p style=\"margin: 5px 0; color: #4a5568;\">${match.job.location} | ${match.job.job_type}</p>\n         <div style=\"margin: 10px 0;\">\n           <span style=\"display: inline-block; padding: 5px 10px; background-color: ${getScoreColor(match.score)}; color: white; border-radius: 15px; font-size: 14px;\">\n             ${match.score}% Match\n           </span>\n         </div>\n         <p style=\"margin: 10px 0;\">${truncate(match.job.description, 150)}</p>\n         <a href=\"${process.env.NEXT_PUBLIC_APP_URL}/jobs/${match.job.id}\" style=\"display: inline-block; padding: 8px 16px; background-color: #3182ce; color: white; text-decoration: none; border-radius: 4px;\">View Job</a>\n       </div>\n     `).join('');\n     \n     try {\n       const { data, error } = await resend.emails.send({\n         from: 'JobMatch AI <matches@jobmatchai.com>',\n         to: user.email,\n         subject: `${topMatches.length} New Job Matches for You`,\n         html: `\n           <div style=\"font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;\">\n             <div style=\"text-align: center; padding: 20px;\">\n               <img src=\"${process.env.NEXT_PUBLIC_APP_URL}/logo.png\" alt=\"JobMatch AI\" style=\"max-width: 150px;\" />\n             </div>\n             <div style=\"padding: 20px;\">\n               <h2 style=\"color: #1a202c;\">Hello ${user.name || 'there'},</h2>\n               <p style=\"color: #4a5568; line-height: 1.5;\">We've found ${topMatches.length} new job matches for you based on your profile and skills.</p>\n               \n               <div style=\"margin: 30px 0;\">\n                 ${matchesHtml}\n               </div>\n               \n               <div style=\"margin-top: 30px; padding-top: 20px; border-top: 1px solid #e2e8f0; text-align: center; color: #718096; font-size: 14px;\">\n                 <p>You're receiving this email because you signed up for job match notifications.</p>\n                 <p><a href=\"${process.env.NEXT_PUBLIC_APP_URL}/settings/notifications\" style=\"color: #3182ce;\">Update notification preferences</a> | <a href=\"${process.env.NEXT_PUBLIC_APP_URL}/unsubscribe?token=${generateUnsubscribeToken(user.id)}\" style=\"color: #3182ce;\">Unsubscribe</a></p>\n               </div>\n             </div>\n           </div>\n         `\n       });\n       \n       if (error) throw error;\n       return data;\n     } catch (error) {\n       console.error('Failed to send email:', error);\n       throw error;\n     }\n   }\n   \n   function getScoreColor(score) {\n     if (score >= 80) return '#48bb78'; // green\n     if (score >= 60) return '#4299e1'; // blue\n     if (score >= 40) return '#ed8936'; // orange\n     return '#a0aec0'; // gray\n   }\n   \n   function truncate(text, maxLength) {\n     if (!text) return '';\n     if (text.length <= maxLength) return text;\n     return text.substring(0, maxLength) + '...';\n   }\n   \n   function generateUnsubscribeToken(userId) {\n     // Simple token generation - in production use proper JWT\n     return Buffer.from(`${userId}:${Date.now()}`).toString('base64');\n   }\n   ```\n3. Create API endpoint for sending match notifications:\n   - Implement pages/api/notifications/send-matches.js\n   - Add authentication and rate limiting\n   - Fetch user's top matches\n   - Send email with matches\n4. Implement unsubscribe functionality:\n   - Create unsubscribe API endpoint\n   - Validate unsubscribe tokens\n   - Update user preferences in database",
+        "testStrategy": "1. Test email sending with valid and invalid parameters\n2. Verify email template rendering with various match data\n3. Test unsubscribe token generation and validation\n4. Validate rate limiting for notification requests\n5. Test email delivery to various email providers\n6. Verify tracking pixel and link functionality\n7. Test unsubscribe flow end-to-end\n8. Validate error handling for failed email sends",
         "priority": "medium",
         "dependencies": [
-          7
+          17
         ],
-        "status": "done",
-        "subtasks": [
-          {
-            "id": 1,
-            "title": "Resend.com API Integration",
-            "description": "Set up and integrate the Resend.com email service with our application",
-            "dependencies": [],
-            "details": "1. Create a Resend.com account and obtain API keys\n2. Install the Resend SDK in our project\n3. Create an email service utility class that handles communication with Resend API\n4. Implement error handling for failed email sends\n5. Set up environment variables for API keys\n6. Write unit tests to verify the integration works correctly",
-            "status": "done"
-          },
-          {
-            "id": 2,
-            "title": "Email Template Design System",
-            "description": "Create reusable email templates with consistent branding and responsive design",
-            "dependencies": [
-              1
-            ],
-            "details": "1. Design HTML/CSS email templates that work across email clients\n2. Create a templating system that allows for variable content insertion\n3. Implement different template types (welcome, notification, digest, etc.)\n4. Add company branding, logo, and footer with required legal information\n5. Test templates across various email clients and devices\n6. Create a preview function to test templates with sample data",
-            "status": "done"
-          },
-          {
-            "id": 3,
-            "title": "Notification System and Unsubscribe Functionality",
-            "description": "Implement the logic for triggering email notifications and handling unsubscribe requests",
-            "dependencies": [
-              1,
-              2
-            ],
-            "details": "1. Create event listeners for actions that should trigger emails\n2. Implement a notification queue system for handling high volume\n3. Add user preference settings for notification types\n4. Generate unique unsubscribe links for each recipient\n5. Create an unsubscribe page and API endpoint\n6. Implement tracking for email opens and link clicks\n7. Add database logging for sent emails and unsubscribe events",
-            "status": "done"
-          }
-        ]
+        "status": "pending",
+        "subtasks": []
       },
       {
-        "id": 9,
-        "title": "Implement Enhanced Profile Management System",
-        "description": "Expand the user profile system with image upload, comprehensive validation, and skill management.",
-        "details": "1. Update Supabase profiles table with additional fields:\n   - profile_image_url (text)\n   - headline (text)\n   - bio (text)\n   - experience_years (integer)\n   - education (jsonb array)\n   - preferred_job_types (text array)\n   - preferred_locations (text array)\n   - preferred_salary_range (jsonb object)\n\n2. Create a ProfileImageUpload component similar to ResumeUpload but for profile images:\n   - Use 'profile-images' storage bucket\n   - Add image cropping functionality\n   - Limit to 1MB file size\n   - Support common image formats (jpg, png, webp)\n\n3. Create a comprehensive ProfileForm component:\n   ```jsx\n   import { useState, useEffect } from 'react';\n   import { useSupabaseClient, useUser } from '@supabase/auth-helpers-react';\n   import ProfileImageUpload from './ProfileImageUpload';\n   import SkillsSelector from './SkillsSelector';\n   \n   export default function ProfileForm() {\n     const supabase = useSupabaseClient();\n     const user = useUser();\n     const [loading, setLoading] = useState(true);\n     const [saving, setSaving] = useState(false);\n     const [profile, setProfile] = useState({\n       full_name: '',\n       headline: '',\n       bio: '',\n       location: '',\n       experience_level: '',\n       experience_years: 0,\n       skills: [],\n       education: [],\n       preferred_job_types: [],\n       preferred_locations: [],\n       preferred_salary_range: { min: 0, max: 0 }\n     });\n     const [errors, setErrors] = useState({});\n     \n     useEffect(() => {\n       if (user) loadProfile();\n     }, [user]);\n     \n     async function loadProfile() {\n       try {\n         setLoading(true);\n         const { data, error } = await supabase\n           .from('profiles')\n           .select('*')\n           .eq('id', user.id)\n           .single();\n           \n         if (error) throw error;\n         setProfile({\n           ...profile,\n           ...data\n         });\n       } catch (error) {\n         console.error('Error loading profile:', error);\n       } finally {\n         setLoading(false);\n       }\n     }\n     \n     function handleChange(e) {\n       const { name, value } = e.target;\n       setProfile(prev => ({\n         ...prev,\n         [name]: value\n       }));\n     }\n     \n     function handleSkillsChange(skills) {\n       setProfile(prev => ({\n         ...prev,\n         skills\n       }));\n     }\n     \n     function validateForm() {\n       const newErrors = {};\n       \n       if (!profile.full_name) newErrors.full_name = 'Name is required';\n       if (!profile.location) newErrors.location = 'Location is required';\n       if (!profile.experience_level) newErrors.experience_level = 'Experience level is required';\n       if (profile.skills.length === 0) newErrors.skills = 'At least one skill is required';\n       \n       setErrors(newErrors);\n       return Object.keys(newErrors).length === 0;\n     }\n     \n     async function handleSubmit(e) {\n       e.preventDefault();\n       \n       if (!validateForm()) return;\n       \n       try {\n         setSaving(true);\n         \n         const { error } = await supabase\n           .from('profiles')\n           .update(profile)\n           .eq('id', user.id);\n           \n         if (error) throw error;\n         \n         alert('Profile saved successfully!');\n       } catch (error) {\n         console.error('Error saving profile:', error);\n         alert('Error saving profile. Please try again.');\n       } finally {\n         setSaving(false);\n       }\n     }\n     \n     if (loading) return <div>Loading profile...</div>;\n     \n     return (\n       <form onSubmit={handleSubmit} className=\"profile-form\">\n         <h2>Your Profile</h2>\n         \n         <ProfileImageUpload />\n         \n         <div className=\"form-group\">\n           <label htmlFor=\"full_name\">Full Name</label>\n           <input\n             type=\"text\"\n             id=\"full_name\"\n             name=\"full_name\"\n             value={profile.full_name || ''}\n             onChange={handleChange}\n           />\n           {errors.full_name && <p className=\"error\">{errors.full_name}</p>}\n         </div>\n         \n         <div className=\"form-group\">\n           <label htmlFor=\"headline\">Professional Headline</label>\n           <input\n             type=\"text\"\n             id=\"headline\"\n             name=\"headline\"\n             value={profile.headline || ''}\n             onChange={handleChange}\n             placeholder=\"e.g., Senior Software Engineer\"\n           />\n         </div>\n         \n         <div className=\"form-group\">\n           <label htmlFor=\"bio\">Bio</label>\n           <textarea\n             id=\"bio\"\n             name=\"bio\"\n             value={profile.bio || ''}\n             onChange={handleChange}\n             rows=\"4\"\n           />\n         </div>\n         \n         <div className=\"form-group\">\n           <label htmlFor=\"location\">Location</label>\n           <input\n             type=\"text\"\n             id=\"location\"\n             name=\"location\"\n             value={profile.location || ''}\n             onChange={handleChange}\n           />\n           {errors.location && <p className=\"error\">{errors.location}</p>}\n         </div>\n         \n         <div className=\"form-group\">\n           <label htmlFor=\"experience_level\">Experience Level</label>\n           <select\n             id=\"experience_level\"\n             name=\"experience_level\"\n             value={profile.experience_level || ''}\n             onChange={handleChange}\n           >\n             <option value=\"\">Select level</option>\n             <option value=\"Entry\">Entry Level</option>\n             <option value=\"Mid\">Mid Level</option>\n             <option value=\"Senior\">Senior Level</option>\n             <option value=\"Executive\">Executive Level</option>\n           </select>\n           {errors.experience_level && <p className=\"error\">{errors.experience_level}</p>}\n         </div>\n         \n         <div className=\"form-group\">\n           <label>Skills</label>\n           <SkillsSelector \n             selectedSkills={profile.skills || []} \n             onChange={handleSkillsChange} \n           />\n           {errors.skills && <p className=\"error\">{errors.skills}</p>}\n         </div>\n         \n         <button type=\"submit\" disabled={saving}>\n           {saving ? 'Saving...' : 'Save Profile'}\n         </button>\n       </form>\n     );\n   }\n   ```\n\n4. Create a SkillsSelector component for adding/removing skills:\n   - Allow manual skill entry\n   - Provide skill suggestions\n   - Support skill categorization\n   - Enable skill removal",
-        "testStrategy": "1. Test profile data loading and saving\n2. Verify form validation for required fields\n3. Test profile image upload and cropping\n4. Verify skills can be added and removed\n5. Test with various input combinations\n6. Verify error handling for API failures\n7. Test responsive design on different screen sizes",
-        "priority": "medium",
-        "dependencies": [
-          6
-        ],
-        "status": "done",
-        "subtasks": [
-          {
-            "id": 1,
-            "title": "Update Database Schema for Enhanced Profiles",
-            "description": "Modify the database schema to support the enhanced profile features including additional user fields, skills categorization, education history, and work experience.",
-            "dependencies": [],
-            "details": "1. Add new columns to the users table: bio, location, website, social_links (JSON)\n2. Create a skills table with columns: id, name, category\n3. Create a user_skills junction table with columns: user_id, skill_id, proficiency_level\n4. Create education table with columns: id, user_id, institution, degree, field, start_date, end_date, description\n5. Create experience table with columns: id, user_id, company, position, start_date, end_date, description\n6. Add profile_image_url column to users table\n7. Write and test migration scripts",
-            "status": "done"
-          },
-          {
-            "id": 2,
-            "title": "Implement Profile Image Upload Component",
-            "description": "Create a reusable component for uploading, cropping, and managing profile images with preview functionality.",
-            "dependencies": [
-              1
-            ],
-            "details": "1. Create ImageUploader React component with drag-and-drop functionality\n2. Implement image preview with zoom and crop capabilities\n3. Add file type validation (only jpg, png, gif)\n4. Implement file size validation (max 5MB)\n5. Create backend endpoint for image upload\n6. Configure cloud storage integration (AWS S3 or similar)\n7. Handle image compression before upload\n8. Implement error handling for failed uploads\n9. Add loading states during upload process",
-            "status": "done"
-          },
-          {
-            "id": 3,
-            "title": "Develop Form Validation System",
-            "description": "Create a comprehensive validation system for all profile form fields with real-time feedback and error handling.",
-            "dependencies": [
-              1
-            ],
-            "details": "1. Define validation rules for all profile fields (required fields, length limits, format patterns)\n2. Implement client-side validation using Formik or React Hook Form\n3. Create custom validation hooks for complex validations\n4. Add real-time validation feedback with appropriate error messages\n5. Implement server-side validation as a secondary security measure\n6. Create field-specific validation components (email, URL, date formats)\n7. Add accessibility features for error states (ARIA attributes)\n8. Implement form submission prevention for invalid data",
-            "status": "done"
-          },
-          {
-            "id": 4,
-            "title": "Build Skills Selector Component",
-            "description": "Develop an interactive skills selector with autocomplete, categorization, and proficiency level selection.",
-            "dependencies": [
-              1,
-              3
-            ],
-            "details": "1. Create a searchable skills input with autocomplete suggestions\n2. Implement skill categorization (Technical, Soft Skills, Languages, etc.)\n3. Add proficiency level selector (Beginner, Intermediate, Expert)\n4. Create visual tags for selected skills with remove functionality\n5. Implement backend API for skill suggestions\n6. Add skill limit validation (max 20 skills)\n7. Create skill category filtering\n8. Implement keyboard navigation for accessibility\n9. Add animations for adding/removing skills",
-            "status": "done"
-          },
-          {
-            "id": 5,
-            "title": "Implement Education and Experience Management",
-            "description": "Create components for adding, editing, and removing multiple education and work experience entries with date validation.",
-            "dependencies": [
-              1,
-              3
-            ],
-            "details": "1. Create reusable form components for education and experience entries\n2. Implement date range pickers with validation (start date before end date)\n3. Add 'Present' option for current positions/education\n4. Create dynamic form arrays for multiple entries\n5. Implement drag-and-drop reordering of entries\n6. Add entry deletion with confirmation\n7. Create collapsible entry views to save space\n8. Implement rich text editor for descriptions\n9. Add validation for required fields (institution, company, dates)",
-            "status": "done"
-          },
-          {
-            "id": 6,
-            "title": "Implement Data Persistence and State Management",
-            "description": "Create a robust system for saving profile data, handling form state, and implementing auto-save functionality.",
-            "dependencies": [
-              1,
-              2,
-              3,
-              4,
-              5
-            ],
-            "details": "1. Implement Redux or Context API state management for form data\n2. Create API endpoints for saving complete and partial profile data\n3. Implement auto-save functionality (every 30 seconds of inactivity)\n4. Add form dirty state tracking to prevent accidental navigation\n5. Implement optimistic UI updates with rollback on failure\n6. Create loading and success states for save operations\n7. Add form data persistence across page refreshes (localStorage)\n8. Implement form reset functionality\n9. Create comprehensive error handling for failed save operations",
-            "status": "done"
-          }
-        ]
-      },
-      {
-        "id": 10,
+        "id": 19,
         "title": "Implement Automated Airtable Sync System",
-        "description": "Create a scheduled job system to automatically synchronize jobs between Airtable and Supabase on a regular basis.",
-        "details": "1. Create a new file at lib/syncJobs.js:\n   ```javascript\n   import { fetchActiveJobs } from './airtable';\n   import { airtableToSupabase } from './jobTransformer';\n   import { createClient } from '@supabase/supabase-js';\n   \n   // Initialize Supabase client\n   const supabase = createClient(\n     process.env.NEXT_PUBLIC_SUPABASE_URL,\n     process.env.SUPABASE_SERVICE_ROLE_KEY\n   );\n   \n   export async function syncJobs() {\n     console.log('Starting job sync:', new Date().toISOString());\n     \n     try {\n       // Update sync status to indicate sync in progress\n       await supabase\n         .from('sync_logs')\n         .insert({\n           status: 'in_progress',\n           started_at: new Date().toISOString(),\n           source: 'airtable'\n         });\n       \n       // Fetch active jobs from Airtable\n       const airtableJobs = await fetchActiveJobs();\n       console.log(`Fetched ${airtableJobs.length} jobs from Airtable`);\n       \n       // Get existing jobs from Supabase\n       const { data: existingJobs } = await supabase\n         .from('jobs')\n         .select('airtable_id, updated_at')\n         .eq('data_source', 'airtable');\n       \n       // Create lookup map for existing jobs\n       const existingJobMap = {};\n       existingJobs?.forEach(job => {\n         existingJobMap[job.airtable_id] = job.updated_at;\n       });\n       \n       // Track sync results\n       const results = {\n         added: 0,\n         updated: 0,\n         unchanged: 0,\n         errors: []\n       };\n       \n       // Process each Airtable job\n       for (const airtableJob of airtableJobs) {\n         try {\n           const supabaseJob = airtableToSupabase(airtableJob);\n           \n           if (!existingJobMap[airtableJob.id]) {\n             // Insert new job\n             await supabase.from('jobs').insert([supabaseJob]);\n             results.added++;\n           } else {\n             // Update existing job\n             await supabase\n               .from('jobs')\n               .update(supabaseJob)\n               .eq('airtable_id', airtableJob.id);\n             results.updated++;\n           }\n         } catch (error) {\n           console.error(`Error processing job ${airtableJob.id}:`, error);\n           results.errors.push({\n             job: airtableJob.id,\n             error: error.message\n           });\n         }\n       }\n       \n       // Update sync log with results\n       await supabase\n         .from('sync_logs')\n         .insert({\n           status: 'completed',\n           started_at: new Date().toISOString(),\n           completed_at: new Date().toISOString(),\n           source: 'airtable',\n           results: results\n         });\n       \n       console.log('Sync completed:', results);\n       return results;\n     } catch (error) {\n       console.error('Sync error:', error);\n       \n       // Log sync failure\n       await supabase\n         .from('sync_logs')\n         .insert({\n           status: 'error',\n           started_at: new Date().toISOString(),\n           completed_at: new Date().toISOString(),\n           source: 'airtable',\n           error: error.message\n         });\n       \n       throw error;\n     }\n   }\n   ```\n\n2. Create a Vercel Cron job by adding the following to vercel.json:\n   ```json\n   {\n     \"crons\": [{\n       \"path\": \"/api/jobs/cron-sync\",\n       \"schedule\": \"0 */4 * * *\"\n     }]\n   }\n   ```\n\n3. Create the cron endpoint at pages/api/jobs/cron-sync.js:\n   ```javascript\n   import { syncJobs } from '../../../lib/syncJobs';\n   \n   export default async function handler(req, res) {\n     // Verify request is from Vercel Cron\n     const authHeader = req.headers.authorization;\n     if (authHeader !== `Bearer ${process.env.CRON_SECRET_KEY}`) {\n       return res.status(401).json({ error: 'Unauthorized' });\n     }\n     \n     try {\n       const results = await syncJobs();\n       return res.status(200).json(results);\n     } catch (error) {\n       console.error('Cron sync error:', error);\n       return res.status(500).json({ error: error.message });\n     }\n   }\n   ```\n\n4. Create a sync status dashboard component for admin users:\n   - Display last sync time\n   - Show sync statistics\n   - Provide manual sync trigger\n   - Display error logs",
-        "testStrategy": "1. Test manual sync trigger functionality\n2. Verify cron job authentication\n3. Test sync process with various Airtable data scenarios\n4. Verify error handling and logging\n5. Test performance with large datasets\n6. Validate sync status dashboard displays correct information\n7. Test conflict resolution with simultaneous updates",
+        "description": "Create an automated system to regularly sync jobs between Airtable and Supabase using cron jobs.",
+        "details": "1. Create lib/syncJobs.js with comprehensive sync logic:\n   ```javascript\n   import { fetchActiveJobs } from './airtable';\n   import { supabase } from './supabaseClient';\n   import { transformAirtableToSupabase } from './jobTransformer';\n   \n   export async function syncJobs() {\n     console.log('Starting job sync process...');\n     const syncStartTime = new Date();\n     const syncResults = {\n       added: 0,\n       updated: 0,\n       unchanged: 0,\n       errors: 0,\n       errorDetails: []\n     };\n     \n     try {\n       // Fetch active jobs from Airtable\n       const airtableJobs = await fetchActiveJobs();\n       console.log(`Fetched ${airtableJobs.length} active jobs from Airtable`);\n       \n       // Fetch existing jobs from Supabase\n       const { data: existingJobs, error } = await supabase\n         .from('jobs')\n         .select('id, airtable_id, updated_at')\n         .not('airtable_id', 'is', null);\n         \n       if (error) throw error;\n       \n       // Create lookup map for existing jobs\n       const existingJobsMap = new Map();\n       existingJobs.forEach(job => existingJobsMap.set(job.airtable_id, job));\n       \n       // Process each Airtable job\n       for (const airtableJob of airtableJobs) {\n         try {\n           const airtableId = airtableJob.id;\n           const transformedJob = transformAirtableToSupabase(airtableJob);\n           \n           // Check if job exists in Supabase\n           const existingJob = existingJobsMap.get(airtableId);\n           \n           if (!existingJob) {\n             // New job - insert into Supabase\n             const { error: insertError } = await supabase\n               .from('jobs')\n               .insert([\n                 {\n                   ...transformedJob,\n                   airtable_id: airtableId,\n                   last_sync_date: syncStartTime,\n                   sync_status: 'synced',\n                   data_source: 'airtable'\n                 }\n               ]);\n               \n             if (insertError) throw insertError;\n             syncResults.added++;\n           } else {\n             // Existing job - update if needed\n             const airtableUpdatedAt = new Date(airtableJob.fields['Last Modified']);\n             const supabaseUpdatedAt = new Date(existingJob.updated_at);\n             \n             // Only update if Airtable record is newer\n             if (airtableUpdatedAt > supabaseUpdatedAt) {\n               const { error: updateError } = await supabase\n                 .from('jobs')\n                 .update({\n                   ...transformedJob,\n                   last_sync_date: syncStartTime,\n                   sync_status: 'synced'\n                 })\n                 .eq('id', existingJob.id);\n                 \n               if (updateError) throw updateError;\n               syncResults.updated++;\n             } else {\n               // Job unchanged\n               syncResults.unchanged++;\n             }\n           }\n         } catch (jobError) {\n           console.error(`Error processing job ${airtableJob.id}:`, jobError);\n           syncResults.errors++;\n           syncResults.errorDetails.push({\n             airtableId: airtableJob.id,\n             error: jobError.message\n           });\n         }\n       }\n       \n       console.log('Sync completed successfully:', syncResults);\n       return syncResults;\n     } catch (error) {\n       console.error('Sync process failed:', error);\n       throw error;\n     }\n   }\n   ```\n2. Set up Vercel Cron job for automated syncing:\n   - Create pages/api/cron/sync-jobs.js endpoint\n   - Configure Vercel cron job to run every 4 hours\n   - Add authentication for cron job (secret key verification)\n   - Implement logging and error notification\n3. Create sync status dashboard component:\n   ```javascript\n   function SyncStatusDashboard() {\n     const [lastSync, setLastSync] = useState(null);\n     const [syncStats, setSyncStats] = useState(null);\n     const [isLoading, setIsLoading] = useState(true);\n     \n     useEffect(() => {\n       fetchSyncStatus();\n     }, []);\n     \n     const fetchSyncStatus = async () => {\n       setIsLoading(true);\n       try {\n         const { data, error } = await supabase\n           .from('jobs')\n           .select('last_sync_date, sync_status')\n           .order('last_sync_date', { ascending: false })\n           .limit(1);\n           \n         if (error) throw error;\n         \n         if (data && data.length > 0) {\n           setLastSync(new Date(data[0].last_sync_date));\n         }\n         \n         // Get sync stats\n         const { data: statsData, error: statsError } = await supabase\n           .from('jobs')\n           .select('sync_status, count')\n           .group('sync_status');\n           \n         if (statsError) throw statsError;\n         \n         const stats = {};\n         statsData.forEach(item => {\n           stats[item.sync_status] = item.count;\n         });\n         \n         setSyncStats(stats);\n       } catch (error) {\n         console.error('Error fetching sync status:', error);\n       } finally {\n         setIsLoading(false);\n       }\n     };\n     \n     const triggerManualSync = async () => {\n       setIsLoading(true);\n       try {\n         const response = await fetch('/api/jobs/sync', { method: 'POST' });\n         const result = await response.json();\n         console.log('Manual sync result:', result);\n         fetchSyncStatus(); // Refresh status after sync\n       } catch (error) {\n         console.error('Manual sync failed:', error);\n       } finally {\n         setIsLoading(false);\n       }\n     };\n     \n     return (\n       <div className=\"p-4 border rounded bg-white shadow-sm\">\n         <h2 className=\"text-xl font-semibold mb-4\">Sync Status</h2>\n         \n         {isLoading ? (\n           <p>Loading sync status...</p>\n         ) : (\n           <div>\n             <div className=\"mb-4\">\n               <p className=\"text-sm text-gray-600\">Last successful sync:</p>\n               <p className=\"font-medium\">\n                 {lastSync ? lastSync.toLocaleString() : 'Never synced'}\n               </p>\n             </div>\n             \n             {syncStats && (\n               <div className=\"grid grid-cols-3 gap-4 mb-4\">\n                 <div className=\"p-3 bg-green-100 rounded\">\n                   <p className=\"text-sm text-gray-600\">Synced</p>\n                   <p className=\"text-xl font-semibold\">{syncStats.synced || 0}</p>\n                 </div>\n                 <div className=\"p-3 bg-yellow-100 rounded\">\n                   <p className=\"text-sm text-gray-600\">Pending</p>\n                   <p className=\"text-xl font-semibold\">{syncStats.pending || 0}</p>\n                 </div>\n                 <div className=\"p-3 bg-red-100 rounded\">\n                   <p className=\"text-sm text-gray-600\">Errors</p>\n                   <p className=\"text-xl font-semibold\">{syncStats.error || 0}</p>\n                 </div>\n               </div>\n             )}\n             \n             <button\n               onClick={triggerManualSync}\n               disabled={isLoading}\n               className=\"bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded\"\n             >\n               {isLoading ? 'Syncing...' : 'Sync Now'}\n             </button>\n           </div>\n         )}\n       </div>\n     );\n   }\n   ```",
+        "testStrategy": "1. Test automated sync process with various Airtable data scenarios\n2. Verify cron job authentication and security\n3. Test error handling and recovery for partial sync failures\n4. Validate sync status dashboard with different sync states\n5. Test manual sync trigger functionality\n6. Verify logging and monitoring of sync processes\n7. Test performance with large job datasets\n8. Validate conflict resolution strategy with simultaneous updates",
         "priority": "medium",
         "dependencies": [
-          5
+          14
         ],
-        "status": "done",
-        "subtasks": [
-          {
-            "id": 1,
-            "title": "Implement Airtable Sync Logic",
-            "description": "Develop the core synchronization logic that will fetch data from Airtable and update the local database.",
-            "dependencies": [],
-            "details": "Create a service class that handles API communication with Airtable. Implement methods for fetching records with pagination support, comparing data with local database to identify changes, and performing CRUD operations to synchronize data. Handle rate limiting and API errors gracefully with exponential backoff. Use the Airtable JavaScript client library and implement data transformation functions to map between Airtable schema and application data models.",
-            "status": "done"
-          },
-          {
-            "id": 2,
-            "title": "Configure Cron Job for Automated Sync",
-            "description": "Set up a scheduled job system to run the sync process at regular intervals.",
-            "dependencies": [
-              1
-            ],
-            "details": "Implement a cron job using node-cron or a similar library to schedule regular sync operations. Configure the frequency based on application requirements (e.g., hourly, daily). Implement job queuing to prevent overlapping sync operations. Add timeout handling to prevent stuck jobs. Create configuration options to customize sync frequency and timing windows. Implement a mechanism to trigger manual sync from the admin interface.",
-            "status": "done"
-          },
-          {
-            "id": 3,
-            "title": "Implement Authentication and Security Measures",
-            "description": "Ensure secure access to Airtable API and protect sensitive sync operations.",
-            "dependencies": [
-              1
-            ],
-            "details": "Implement secure storage for Airtable API keys using environment variables or a secrets management service. Add IP restrictions for API access if applicable. Create role-based access control for sync operations in the admin interface. Implement request signing for API calls if required. Add rate limiting for manual sync triggers to prevent abuse. Create an audit log for all authentication and authorization events related to the sync system.",
-            "status": "done"
-          },
-          {
-            "id": 4,
-            "title": "Develop Logging and Monitoring System",
-            "description": "Create comprehensive logging and monitoring for the sync process to track performance and troubleshoot issues.",
-            "dependencies": [
-              1,
-              2
-            ],
-            "details": "Implement structured logging for all sync operations with appropriate log levels. Create metrics collection for sync duration, record counts, error rates, and API usage. Set up alerts for failed syncs or abnormal patterns. Develop a log rotation and retention policy. Implement performance tracking to identify bottlenecks. Create a dashboard to visualize sync metrics over time. Set up error reporting to notify administrators of critical failures.",
-            "status": "done"
-          },
-          {
-            "id": 5,
-            "title": "Build Admin Dashboard for Sync Management",
-            "description": "Develop a user interface for administrators to monitor and manage the Airtable synchronization process.",
-            "dependencies": [
-              2,
-              3,
-              4
-            ],
-            "details": "Create a dashboard showing sync status, history, and statistics. Implement controls for manual sync triggering with table selection options. Add configuration interface for adjusting sync settings and schedules. Develop a log viewer with filtering and search capabilities. Create visualizations for sync performance metrics. Implement user management for admin access. Add functionality to view and resolve sync conflicts or errors. Include documentation and help resources within the interface.",
-            "status": "done"
-          }
-        ]
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 20,
+        "title": "Create Sync Status Dashboard and Admin Interface",
+        "description": "Build an admin interface for monitoring and managing the Airtable sync process and job data.",
+        "details": "1. Create admin dashboard page (pages/admin/index.js):\n   - Implement admin-only access control\n   - Add authentication check middleware\n   - Create dashboard layout with navigation\n2. Build sync status overview component:\n   - Display last sync timestamp\n   - Show sync statistics (total jobs, active jobs, sync errors)\n   - Add manual sync trigger button\n   - Display sync history log\n3. Implement job management interface:\n   - Create job listing with filtering and sorting\n   - Add job detail view with edit capability\n   - Implement job status management (activate/deactivate)\n   - Add bulk operations for job management\n4. Create sync error management:\n   - Display detailed error information\n   - Add retry functionality for failed jobs\n   - Implement error resolution tracking\n   - Create error notification system\n5. Add Airtable integration settings:\n   - Display current Airtable connection status\n   - Allow updating API keys and base IDs\n   - Add sync frequency configuration\n   - Implement test connection functionality\n6. Create job statistics and analytics:\n   - Display job posting trends\n   - Show match statistics by job\n   - Add user engagement metrics\n   - Create exportable reports",
+        "testStrategy": "1. Test admin access control with various user roles\n2. Verify sync status display accuracy\n3. Test manual sync trigger and error handling\n4. Validate job management interface with CRUD operations\n5. Test error management and resolution workflow\n6. Verify Airtable integration settings updates\n7. Test analytics data accuracy and report generation\n8. Validate responsive design for different screen sizes\n9. Test accessibility compliance for admin interface",
+        "priority": "low",
+        "dependencies": [
+          19
+        ],
+        "status": "pending",
+        "subtasks": []
       }
     ],
     "metadata": {
       "created": "2025-06-22T01:19:42.010Z",
-      "updated": "2025-06-22T02:52:19.574Z",
+      "updated": "2025-06-22T19:44:33.475Z",
       "description": "Tasks for master context"
     }
   }
