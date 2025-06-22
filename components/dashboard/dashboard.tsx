@@ -5,40 +5,41 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { ProfileForm } from "@/components/profile/profile-form"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { LogOut, Search, FileText, Mail, BarChart3, Settings } from "lucide-react"
+import { SyncDashboard } from "@/components/admin/sync-dashboard"
+import { LogOut, Search, FileText, Mail, BarChart3, Settings, Briefcase, Users, TrendingUp, Database } from "lucide-react"
 
 export function Dashboard() {
   const { user, profile, signOut } = useAuth()
 
   const stats = [
-    { label: "Job Matches", value: "12", icon: Search, color: "text-green-600" },
-    { label: "Cover Letters", value: "8", icon: FileText, color: "text-yellow-600" },
-    { label: "Emails Sent", value: "5", icon: Mail, color: "text-red-600" },
-    { label: "Responses", value: "2", icon: BarChart3, color: "text-green-600" },
+    { label: "Job Matches", value: "12", icon: Briefcase, color: "text-blue-600" },
+    { label: "Applications", value: "8", icon: Mail, color: "text-green-600" },
+    { label: "Response Rate", value: "73%", icon: TrendingUp, color: "text-yellow-600" },
+    { label: "Active Jobs", value: "156", icon: Database, color: "text-purple-600" },
   ]
 
   const recentMatches = [
     {
       title: "Senior Software Engineer",
-      company: "Tech Innovations Inc.",
-      location: "Arlington, VA",
+      company: "Tech Corp",
+      location: "San Francisco, CA",
       match: "95%",
-      status: "Email Sent",
-    },
-    {
-      title: "Full Stack Developer",
-      company: "Digital Solutions LLC",
-      location: "Bethesda, MD",
-      match: "88%",
-      status: "Cover Letter Generated",
+      status: "Applied"
     },
     {
       title: "Product Manager",
-      company: "StartupCorp",
-      location: "Washington, DC",
-      match: "92%",
-      status: "New Match",
+      company: "Innovation Labs",
+      location: "New York, NY",
+      match: "88%",
+      status: "Pending"
     },
+    {
+      title: "Data Scientist",
+      company: "Analytics Pro",
+      location: "Austin, TX",
+      match: "92%",
+      status: "Interview"
+    }
   ]
 
   return (
@@ -67,6 +68,7 @@ export function Dashboard() {
             <TabsTrigger value="overview">Overview</TabsTrigger>
             <TabsTrigger value="matches">Job Matches</TabsTrigger>
             <TabsTrigger value="profile">Profile</TabsTrigger>
+            <TabsTrigger value="sync">Sync Management</TabsTrigger>
             <TabsTrigger value="settings">Settings</TabsTrigger>
           </TabsList>
 
@@ -130,14 +132,15 @@ export function Dashboard() {
             <ProfileForm />
           </TabsContent>
 
+          <TabsContent value="sync">
+            <SyncDashboard />
+          </TabsContent>
+
           <TabsContent value="settings">
             <Card>
               <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Settings className="h-5 w-5" />
-                  Account Settings
-                </CardTitle>
-                <CardDescription>Manage your account preferences and notifications</CardDescription>
+                <CardTitle>Settings</CardTitle>
+                <CardDescription>Manage your account preferences</CardDescription>
               </CardHeader>
               <CardContent>
                 <p className="text-slate-600">Settings functionality coming soon...</p>
