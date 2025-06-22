@@ -62,6 +62,11 @@ export interface SupabaseJob {
 
 // Fetch active jobs from Airtable
 export async function fetchActiveJobs(): Promise<AirtableJobRecord[]> {
+  // Add validation for environment variables
+  if (!process.env.AIRTABLE_TOKEN || !process.env.AIRTABLE_BASE_ID) {
+    throw new Error('Airtable API credentials are not defined in environment variables.')
+  }
+
   try {
     const records = await base(tableName)
       .select({

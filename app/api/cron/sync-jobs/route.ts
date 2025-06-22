@@ -1,5 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { syncJobsFromAirtable } from '@/lib/syncJobs'
+import dotenv from 'dotenv'
+import path from 'path'
+
+// Load environment variables from .env.local
+dotenv.config({ path: path.resolve(process.cwd(), '.env.local') })
 
 export async function POST(request: NextRequest) {
   try {

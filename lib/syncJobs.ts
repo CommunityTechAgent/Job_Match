@@ -92,7 +92,7 @@ export async function syncJobsFromAirtable(): Promise<SyncResult> {
   } catch (error) {
     const errorMessage = `Sync failed: ${error instanceof Error ? error.message : 'Unknown error'}`
     result.errors.push(errorMessage)
-    console.error(errorMessage)
+    console.error('Detailed Sync Error:', error)
   }
   
   return result

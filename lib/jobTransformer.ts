@@ -43,8 +43,8 @@ export function transformAirtableJob(airtableRecord: AirtableJobRecord): Supabas
 }
 
 // Data validation and sanitization functions
-function sanitizeText(text?: string): string | undefined {
-  if (!text) return undefined
+function sanitizeText(text?: string): string {
+  if (!text) return ''
   return text.trim().replace(/\s+/g, ' ')
 }
 

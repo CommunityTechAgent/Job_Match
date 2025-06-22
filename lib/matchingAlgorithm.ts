@@ -108,12 +108,16 @@ export async function getActiveJobsForMatching(filters?: MatchFilters): Promise<
     query = query.eq('remote_friendly', true)
   }
 
-  // Apply search filter - search across multiple fields
+  // Apply search filter - use full-text search for better results
   if (filters?.search) {
-    const searchTerm = filters.search.toLowerCase()
-    query = query.or(
-      `title.ilike.%${searchTerm}%,company.ilike.%${searchTerm}%,description.ilike.%${searchTerm}%,requirements.ilike.%${searchTerm}%`
-    )
+    // Sanitize the search term for FTS: replace spaces with ' & ' for AND logic
+    const searchTerm = filters.search.trim().replace(/\s+/g, ' & ')
+    
+    if (searchTerm) {
+      query = query.or(
+        `title.fts.${searchTerm},description.fts.${searchTerm},requirements.fts.${searchTerm}`
+      )
+    }
   }
 
   if (filters?.limit) {
