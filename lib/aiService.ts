@@ -213,6 +213,8 @@ Return only the job title, nothing else.`
     
   } catch (error) {
     return {
+      jobTitle: undefined,
+      confidence: 0,
       error: error instanceof Error ? error.message : 'Job title extraction failed'
     }
   }
@@ -279,6 +281,9 @@ Return only valid JSON.`
     
   } catch (error) {
     return {
+      experienceLevel: undefined,
+      confidence: 0,
+      reasoning: '',
       error: error instanceof Error ? error.message : 'Experience level determination failed'
     }
   }
@@ -343,5 +348,32 @@ export function getRateLimitStatus(): {
     hour: requestCount.hour,
     minuteLimit: RATE_LIMIT.requestsPerMinute,
     hourLimit: RATE_LIMIT.requestsPerHour
+  }
+}
+
+/**
+ * Test AI service configuration
+ */
+export async function testAIConfiguration(): Promise<boolean> {
+  try {
+    const apiKey = process.env.ANTHROPIC_API_KEY
+    if (!apiKey) {
+      return false
+    }
+
+    const client = getAnthropicClient()
+    
+    // Try a simple test call
+    const response = await client.messages.create({
+      model: 'claude-3-sonnet-20240229',
+      max_tokens: 10,
+      temperature: 0,
+      messages: [{ role: 'user', content: 'Hello' }]
+    })
+
+    return response.content[0]?.type === 'text'
+  } catch (error) {
+    console.error('AI configuration test failed:', error)
+    return false
   }
 } 

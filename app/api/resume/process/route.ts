@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { extractResumeText, validateResumeContent, getFileMetadata } from '@/lib/resumeParser'
-import { extractSkillsFromResume, determineExperienceLevel } from '@/lib/aiService'
+import { extractSkillsFromResume, determineExperienceLevel, testAIConfiguration } from '@/lib/aiService'
 import { updateResumeParsingStatus, updateAiSkillsExtractionStatus } from '@/lib/supabase'
 
 export async function POST(request: NextRequest) {
@@ -179,6 +179,29 @@ async function processSkillsExtraction(profileId: string, resumeText: string) {
 // GET endpoint to check processing status
 export async function GET(request: NextRequest) {
   try {
+    const { searchParams } = new URL(request.url)
+    const test = searchParams.get('test')
+    const profileId = searchParams.get('profileId')
+
+    // Handle test configuration check
+    if (test === 'config') {
+      try {
+        const isConfigured = await testAIConfiguration()
+        
+        return NextResponse.json({
+          success: isConfigured,
+          message: isConfigured ? 'AI service configured correctly' : 'AI service not configured',
+          error: isConfigured ? null : 'Missing API key or configuration'
+        })
+      } catch (error) {
+        return NextResponse.json({
+          success: false,
+          message: 'AI service configuration test failed',
+          error: error instanceof Error ? error.message : 'Unknown error'
+        })
+      }
+    }
+
     // For now, we'll skip authentication check
     // In production, you should implement proper authentication
     
@@ -186,9 +209,6 @@ export async function GET(request: NextRequest) {
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
     )
-
-    const { searchParams } = new URL(request.url)
-    const profileId = searchParams.get('profileId')
 
     if (!profileId) {
       return NextResponse.json({ error: 'Profile ID is required' }, { status: 400 })
