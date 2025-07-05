@@ -1,16 +1,16 @@
 import type React from "react"
+import type { Metadata } from "next"
 import { Inter } from "next/font/google"
+import "./globals.css"
 import { AuthProvider } from "@/contexts/auth-context"
 import { SessionLoader } from "@/components/auth/session-loader"
-import ErrorBoundary from "@/components/error-boundary"
-import "./globals.css"
+import { Toaster } from "@/components/ui/sonner"
 
 const inter = Inter({ subsets: ["latin"] })
 
-export const metadata = {
-  title: "JobMatch AI - AI-Powered Job Discovery",
-  description:
-    "Transform your job search with AI-powered matching, personalized cover letters, and direct employer connections.",
+export const metadata: Metadata = {
+  title: "JobMatch AI - AI-Powered Job Matching Platform",
+  description: "Find your perfect job match with AI-powered recommendations and automated applications.",
     generator: 'v0.dev'
 }
 
@@ -22,11 +22,12 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={inter.className}>
-        <ErrorBoundary>
-          <AuthProvider>
-            <SessionLoader>{children}</SessionLoader>
-          </AuthProvider>
-        </ErrorBoundary>
+        <AuthProvider>
+          <SessionLoader>
+            {children}
+            <Toaster />
+          </SessionLoader>
+        </AuthProvider>
       </body>
     </html>
   )
