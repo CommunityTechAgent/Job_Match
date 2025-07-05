@@ -10,8 +10,9 @@ import { Textarea } from "@/components/ui/textarea"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { useAuth } from "@/contexts/auth-context"
-import { Loader2, Save, User, MapPin, Briefcase } from "lucide-react"
+import { Loader2, Save, User, MapPin, Briefcase, Sparkles, CheckCircle } from "lucide-react"
 import { ResumeUpload } from "./resume-upload"
+import { Badge } from "@/components/ui/badge"
 
 export function ProfileForm() {
   const { profile, updateProfile } = useAuth()
@@ -24,6 +25,12 @@ export function ProfileForm() {
     experience_level: "",
     skills: "",
   })
+
+  // Helper: Get AI-extracted skills/confidence
+  const aiSkills = Array.isArray(profile?.skills) ? profile.skills : []
+  const aiConfidence = profile?.ai_extracted_skills_confidence?.skills || {}
+  const aiJobTitle = profile?.ai_extracted_job_title || ""
+  const aiExperienceLevel = profile?.ai_extracted_experience_level || ""
 
   useEffect(() => {
     if (profile) {
@@ -81,6 +88,35 @@ export function ProfileForm() {
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-6">
+            {/* AI Suggestions Section */}
+            {(aiJobTitle || aiExperienceLevel) && (
+              <div className="mb-4 p-3 bg-purple-50 border border-purple-200 rounded-lg">
+                <div className="flex items-center gap-2 mb-2">
+                  <Sparkles className="h-4 w-4 text-purple-600" />
+                  <span className="font-medium text-purple-900">AI Suggestions</span>
+                </div>
+                <div className="flex flex-col gap-2">
+                  {aiJobTitle && (
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm text-purple-800">Job Title Suggestion:</span>
+                      <Badge variant="secondary">{aiJobTitle}</Badge>
+                      <Button type="button" size="sm" variant="outline" onClick={() => handleChange("job_title", aiJobTitle)}>
+                        Accept
+                      </Button>
+                    </div>
+                  )}
+                  {aiExperienceLevel && (
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm text-purple-800">Experience Level Suggestion:</span>
+                      <Badge variant="secondary">{aiExperienceLevel}</Badge>
+                      <Button type="button" size="sm" variant="outline" onClick={() => handleChange("experience_level", aiExperienceLevel)}>
+                        Accept
+                      </Button>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="full_name">Full Name</Label>
@@ -155,6 +191,37 @@ export function ProfileForm() {
               <p className="text-sm text-slate-500">
                 Enter your skills separated by commas. This helps our AI find better job matches.
               </p>
+              {/* AI-Extracted Skills Section */}
+              {aiSkills.length > 0 && (
+                <div className="mt-2 p-2 bg-purple-50 border border-purple-200 rounded-lg">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Sparkles className="h-4 w-4 text-purple-600" />
+                    <span className="font-medium text-purple-900">AI-Extracted Skills</span>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {aiSkills.map((skill, idx) => (
+                      <div key={skill} className="flex items-center gap-1">
+                        <Badge variant="secondary" className="text-xs">
+                          {skill}
+                        </Badge>
+                        {aiConfidence[skill] !== undefined && (
+                          <span className="text-xs text-purple-700">({aiConfidence[skill]}%)</span>
+                        )}
+                        {!formData.skills.toLowerCase().includes(skill.toLowerCase()) && (
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant="outline"
+                            onClick={() => handleChange("skills", formData.skills ? formData.skills + ", " + skill : skill)}
+                          >
+                            Add
+                          </Button>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
 
             {success && (
