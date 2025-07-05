@@ -2,6 +2,7 @@ import type React from "react"
 import { Inter } from "next/font/google"
 import { AuthProvider } from "@/contexts/auth-context"
 import { SessionLoader } from "@/components/auth/session-loader"
+import ErrorBoundary from "@/components/error-boundary"
 import "./globals.css"
 
 const inter = Inter({ subsets: ["latin"] })
@@ -21,9 +22,11 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={inter.className}>
-        <AuthProvider>
-          <SessionLoader>{children}</SessionLoader>
-        </AuthProvider>
+        <ErrorBoundary>
+          <AuthProvider>
+            <SessionLoader>{children}</SessionLoader>
+          </AuthProvider>
+        </ErrorBoundary>
       </body>
     </html>
   )

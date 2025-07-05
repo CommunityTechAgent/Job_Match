@@ -14,11 +14,26 @@ export function createSupabaseClient() {
     // In a client-side context, this might not be an error, so we just don't initialize.
     // Server-side checks should handle missing env vars more strictly.
     console.warn("Supabase credentials not found. Client not initialized.");
+    console.warn("URL:", supabaseUrl ? "Set" : "Missing");
+    console.warn("Key:", supabaseAnonKey ? "Set" : "Missing");
     return null;
   }
   
-  supabaseClient = createClient(supabaseUrl, supabaseAnonKey)
-  return supabaseClient
+  try {
+    supabaseClient = createClient(supabaseUrl, supabaseAnonKey, {
+      auth: {
+        autoRefreshToken: true,
+        persistSession: true,
+        detectSessionInUrl: true,
+        flowType: 'pkce'
+      }
+    })
+    console.log("Supabase client initialized successfully");
+    return supabaseClient
+  } catch (error) {
+    console.error("Error creating Supabase client:", error);
+    return null;
+  }
 }
 
 // For use in client components, where we want a singleton instance.
@@ -26,8 +41,7 @@ export const supabase = createSupabaseClient();
 
 // Types for our database
 export type Profile = {
-  id: string
-  user_id: string
+  id: string  // This is the user_id from auth.users
   email: string
   full_name: string | null
   avatar_url: string | null
@@ -112,7 +126,7 @@ export const createProfile = async (userId: string, email: string, fullName: str
     .from("profiles")
     .insert([
       {
-        user_id: userId,
+        id: userId,
         email: email,
         full_name: fullName,
       },
@@ -126,7 +140,7 @@ export const createProfile = async (userId: string, email: string, fullName: str
 export const getProfile = async (userId: string) => {
   const client = createSupabaseClient();
   if (!client) return { data: null, error: new Error("Supabase client not initialized.") };
-  const { data, error } = await client.from("profiles").select("*").eq("user_id", userId).single()
+  const { data, error } = await client.from("profiles").select("*").eq("id", userId).single()
 
   return { data, error }
 }
@@ -137,7 +151,7 @@ export const updateProfile = async (userId: string, updates: Partial<Profile>) =
   const { data, error } = await client
     .from("profiles")
     .update({ ...updates, updated_at: new Date().toISOString() })
-    .eq("user_id", userId)
+    .eq("id", userId)
     .select()
     .single()
 

@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog"
+import { Dialog, DialogContent, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { useAuth } from "@/contexts/auth-context"
 import { Loader2, Mail, Lock, User } from "lucide-react"
 
@@ -21,23 +21,29 @@ export function AuthModal({ trigger, defaultTab = "login" }: AuthModalProps) {
   const [open, setOpen] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
+  const [success, setSuccess] = useState("")
   const { signIn, signUp } = useAuth()
 
   const handleSignIn = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     setLoading(true)
     setError("")
+    setSuccess("")
 
     const formData = new FormData(e.currentTarget)
     const email = formData.get("email") as string
     const password = formData.get("password") as string
 
+    console.log("Form submission - Sign In:", { email })
+
     const { error } = await signIn(email, password)
 
     if (error) {
-      setError(error.message)
+      console.error("Sign in failed:", error);
+      setError(error.message || "Sign in failed. Please try again.")
     } else {
-      setOpen(false)
+      setSuccess("Sign in successful! Redirecting...")
+      setTimeout(() => setOpen(false), 1000)
     }
     setLoading(false)
   }
@@ -46,26 +52,40 @@ export function AuthModal({ trigger, defaultTab = "login" }: AuthModalProps) {
     e.preventDefault()
     setLoading(true)
     setError("")
+    setSuccess("")
 
     const formData = new FormData(e.currentTarget)
     const email = formData.get("email") as string
     const password = formData.get("password") as string
     const fullName = formData.get("fullName") as string
 
+    console.log("Form submission - Sign Up:", { email, fullName })
+
     const { error } = await signUp(email, password, fullName)
 
     if (error) {
-      setError(error.message)
+      console.error("Sign up failed:", error);
+      setError(error.message || "Sign up failed. Please try again.")
     } else {
-      setOpen(false)
+      setSuccess("Account created successfully! Please check your email to verify your account.")
+      setTimeout(() => setOpen(false), 2000)
     }
     setLoading(false)
   }
 
+  const handleOpenChange = (newOpen: boolean) => {
+    setOpen(newOpen)
+    if (!newOpen) {
+      setError("")
+      setSuccess("")
+    }
+  }
+
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>{trigger}</DialogTrigger>
       <DialogContent className="sm:max-w-md">
+        <DialogTitle className="sr-only">Authentication</DialogTitle>
         <Tabs defaultValue={defaultTab} className="w-full">
           <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="login">Login</TabsTrigger>
@@ -91,6 +111,7 @@ export function AuthModal({ trigger, defaultTab = "login" }: AuthModalProps) {
                         placeholder="Enter your email"
                         className="pl-10"
                         required
+                        disabled={loading}
                       />
                     </div>
                   </div>
@@ -105,10 +126,12 @@ export function AuthModal({ trigger, defaultTab = "login" }: AuthModalProps) {
                         placeholder="Enter your password"
                         className="pl-10"
                         required
+                        disabled={loading}
                       />
                     </div>
                   </div>
                   {error && <p className="text-sm text-red-600">{error}</p>}
+                  {success && <p className="text-sm text-green-600">{success}</p>}
                   <Button type="submit" className="w-full bg-red-500 hover:bg-red-600" disabled={loading}>
                     {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                     Sign In
@@ -137,6 +160,7 @@ export function AuthModal({ trigger, defaultTab = "login" }: AuthModalProps) {
                         placeholder="Enter your full name"
                         className="pl-10"
                         required
+                        disabled={loading}
                       />
                     </div>
                   </div>
@@ -151,6 +175,7 @@ export function AuthModal({ trigger, defaultTab = "login" }: AuthModalProps) {
                         placeholder="Enter your email"
                         className="pl-10"
                         required
+                        disabled={loading}
                       />
                     </div>
                   </div>
@@ -164,12 +189,14 @@ export function AuthModal({ trigger, defaultTab = "login" }: AuthModalProps) {
                         type="password"
                         placeholder="Create a password"
                         className="pl-10"
-                        minLength={6}
                         required
+                        minLength={6}
+                        disabled={loading}
                       />
                     </div>
                   </div>
                   {error && <p className="text-sm text-red-600">{error}</p>}
+                  {success && <p className="text-sm text-green-600">{success}</p>}
                   <Button type="submit" className="w-full bg-red-500 hover:bg-red-600" disabled={loading}>
                     {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                     Create Account
