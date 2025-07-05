@@ -24,6 +24,17 @@ export interface JobMatch {
   match_reasons: string[]
   matching_skills: string[]
   skills_overlap_percentage: number
+  // Enhanced matching fields
+  confidence_breakdown: {
+    skills_score: number
+    skills_confidence: number
+    location_score: number
+    experience_score: number
+    bonus_score: number
+    ai_enhancement_score: number
+  }
+  ai_enhanced: boolean
+  skills_confidence_level: 'high' | 'medium' | 'low'
 }
 
 export interface MatchResult {
@@ -46,13 +57,22 @@ export interface MatchFilters {
   remoteOnly?: boolean
   limit?: number
   search?: string
+  requiredSkills?: string[]
+  minSkillsMatch?: number
+  skillsConfidenceLevel?: 'high' | 'medium' | 'low'
+  aiEnhancedOnly?: boolean
 }
 
 /**
- * Get user profile data for matching
+ * Get user profile data for matching with AI-extracted skills
  */
 export async function getUserProfileForMatching(userId: string): Promise<Partial<Profile>> {
-  const { data: profile, error } = await supabase
+  const client = supabase
+  if (!client) {
+    throw new Error('Supabase client not initialized')
+  }
+
+  const { data: profile, error } = await client
     .from('profiles')
     .select(`
       id,
@@ -67,7 +87,13 @@ export async function getUserProfileForMatching(userId: string): Promise<Partial
       preferred_locations,
       preferred_salary_range,
       remote_preference,
-      availability_status
+      availability_status,
+      ai_skills_extracted,
+      ai_extracted_job_title,
+      ai_extracted_experience_level,
+      ai_extracted_skills_confidence,
+      resume_parsing_status,
+      resume_validation_confidence
     `)
     .eq('user_id', userId)
     .single()
@@ -77,14 +103,19 @@ export async function getUserProfileForMatching(userId: string): Promise<Partial
     throw new Error(`Failed to fetch user profile: ${error.message}`)
   }
 
-  return profile || {}
+  return (profile as Partial<Profile>) || {}
 }
 
 /**
  * Get active jobs for matching
  */
 export async function getActiveJobsForMatching(filters?: MatchFilters): Promise<any[]> {
-  let query = supabase
+  const client = supabase
+  if (!client) {
+    throw new Error('Supabase client not initialized')
+  }
+
+  let query = client
     .from('jobs')
     .select('*')
     .eq('status', 'Active')
@@ -135,18 +166,27 @@ export async function getActiveJobsForMatching(filters?: MatchFilters): Promise<
 }
 
 /**
- * Calculate skills overlap between user and job
+ * Calculate skills overlap between user and job with AI confidence scoring
  */
-function calculateSkillsOverlap(userSkills: string[], jobSkills: string[]): {
+function calculateSkillsOverlap(
+  userSkills: string[], 
+  jobSkills: string[], 
+  aiSkillsConfidence?: any,
+  aiSkillsExtracted?: boolean
+): {
   matchingSkills: string[]
   overlapPercentage: number
   score: number
+  confidenceScore: number
+  aiEnhanced: boolean
 } {
   if (!userSkills?.length || !jobSkills?.length) {
     return {
       matchingSkills: [],
       overlapPercentage: 0,
-      score: 0
+      score: 0,
+      confidenceScore: 0,
+      aiEnhanced: false
     }
   }
 
@@ -154,19 +194,43 @@ function calculateSkillsOverlap(userSkills: string[], jobSkills: string[]): {
   const jobSkillsSet = new Set(jobSkills.map(s => s.toLowerCase().trim()))
 
   const matchingSkills: string[] = []
+  let totalConfidence = 0
+  let matchedSkillsCount = 0
+
   jobSkillsSet.forEach(skill => {
     if (userSkillsSet.has(skill)) {
       matchingSkills.push(skill)
+      matchedSkillsCount++
+      
+      // Calculate confidence score if AI data is available
+      if (aiSkillsExtracted && aiSkillsConfidence?.skills) {
+        const confidence = aiSkillsConfidence.skills[skill] || 50 // Default to 50 if not found
+        totalConfidence += confidence
+      }
     }
   })
 
   const overlapPercentage = (matchingSkills.length / jobSkillsSet.size) * 100
-  const score = Math.min(50, overlapPercentage * 0.5) // Max 50 points for skills
+  const baseScore = Math.min(40, overlapPercentage * 0.4) // Max 40 points for basic skills match
+  
+  // AI confidence bonus (up to 10 additional points)
+  let confidenceScore = 0
+  let aiEnhanced = false
+  
+  if (aiSkillsExtracted && aiSkillsConfidence && matchedSkillsCount > 0) {
+    const averageConfidence = totalConfidence / matchedSkillsCount
+    confidenceScore = Math.min(10, (averageConfidence / 100) * 10) // Convert confidence to 0-10 points
+    aiEnhanced = true
+  }
+
+  const totalScore = baseScore + confidenceScore
 
   return {
     matchingSkills,
     overlapPercentage,
-    score
+    score: totalScore,
+    confidenceScore,
+    aiEnhanced
   }
 }
 
@@ -314,17 +378,36 @@ export async function findJobMatches(
       let totalScore = 0
       const matchReasons: string[] = []
       const matchingSkills: string[] = []
+      const confidenceBreakdown = {
+        skills_score: 0,
+        skills_confidence: 0,
+        location_score: 0,
+        experience_score: 0,
+        bonus_score: 0,
+        ai_enhancement_score: 0
+      }
 
-      // Skills matching (highest weight)
+      // Skills matching with AI confidence (highest weight)
       if (userProfile.skills?.length) {
         const jobSkills = job.skills_required || job.requirements?.split(',').map((s: string) => s.trim()) || []
-        const skillsMatch = calculateSkillsOverlap(userProfile.skills, jobSkills)
+        const skillsMatch = calculateSkillsOverlap(
+          userProfile.skills, 
+          jobSkills,
+          userProfile.ai_extracted_skills_confidence,
+          userProfile.ai_skills_extracted || false
+        )
         
         totalScore += skillsMatch.score
+        confidenceBreakdown.skills_score = skillsMatch.score
+        confidenceBreakdown.skills_confidence = skillsMatch.confidenceScore
         matchingSkills.push(...skillsMatch.matchingSkills)
         
         if (skillsMatch.matchingSkills.length > 0) {
-          matchReasons.push(`Matched ${skillsMatch.matchingSkills.length} skills: ${skillsMatch.matchingSkills.join(', ')}`)
+          let reason = `Matched ${skillsMatch.matchingSkills.length} skills: ${skillsMatch.matchingSkills.join(', ')}`
+          if (skillsMatch.aiEnhanced) {
+            reason += ` (AI-enhanced with ${Math.round(skillsMatch.confidenceScore)} confidence points)`
+          }
+          matchReasons.push(reason)
         }
       }
 
@@ -332,27 +415,50 @@ export async function findJobMatches(
       if (userProfile.location && job.location) {
         const locationMatch = calculateLocationMatch(userProfile.location, job.location)
         totalScore += locationMatch.score
+        confidenceBreakdown.location_score = locationMatch.score
         if (locationMatch.reason) {
           matchReasons.push(locationMatch.reason)
         }
       }
 
-      // Experience level matching
-      if (userProfile.experience_level && job.experience_level) {
-        const experienceMatch = calculateExperienceMatch(userProfile.experience_level, job.experience_level)
+      // Experience level matching (use AI-extracted if available)
+      const userExperienceLevel = userProfile.ai_extracted_experience_level || userProfile.experience_level
+      if (userExperienceLevel && job.experience_level) {
+        const experienceMatch = calculateExperienceMatch(userExperienceLevel, job.experience_level)
         totalScore += experienceMatch.score
+        confidenceBreakdown.experience_score = experienceMatch.score
         if (experienceMatch.reason) {
-          matchReasons.push(experienceMatch.reason)
+          let reason = experienceMatch.reason
+          if (userProfile.ai_extracted_experience_level) {
+            reason += ' (AI-extracted)'
+          }
+          matchReasons.push(reason)
         }
       }
 
       // Bonus factors
       const bonusFactors = calculateBonusFactors(job, userProfile)
       totalScore += bonusFactors.score
+      confidenceBreakdown.bonus_score = bonusFactors.score
       matchReasons.push(...bonusFactors.reasons)
+
+      // AI enhancement bonus
+      if (userProfile.ai_skills_extracted && userProfile.resume_parsing_status === 'completed') {
+        totalScore += 5
+        confidenceBreakdown.ai_enhancement_score = 5
+        matchReasons.push('AI-enhanced profile with resume analysis')
+      }
 
       // Cap score at 100
       const finalScore = Math.min(100, Math.round(totalScore))
+
+      // Determine skills confidence level
+      let skillsConfidenceLevel: 'high' | 'medium' | 'low' = 'low'
+      if (confidenceBreakdown.skills_confidence >= 7) {
+        skillsConfidenceLevel = 'high'
+      } else if (confidenceBreakdown.skills_confidence >= 3) {
+        skillsConfidenceLevel = 'medium'
+      }
 
       return {
         ...job,
@@ -360,17 +466,50 @@ export async function findJobMatches(
         match_reasons: matchReasons,
         matching_skills: matchingSkills,
         skills_overlap_percentage: matchingSkills.length > 0 ? 
-          (matchingSkills.length / (job.skills_required?.length || 1)) * 100 : 0
+          (matchingSkills.length / (job.skills_required?.length || 1)) * 100 : 0,
+        confidence_breakdown: confidenceBreakdown,
+        ai_enhanced: userProfile.ai_skills_extracted || false,
+        skills_confidence_level: skillsConfidenceLevel
       }
     })
 
     // Sort by match score (highest first)
     const sortedMatches = scoredJobs.sort((a, b) => b.match_score - a.match_score)
 
-    // Apply minimum score filter
-    const filteredMatches = filters?.minScore ? 
-      sortedMatches.filter(job => job.match_score >= filters.minScore!) : 
-      sortedMatches
+    // Apply filters
+    let filteredMatches = sortedMatches
+
+    // Minimum score filter
+    if (filters?.minScore) {
+      filteredMatches = filteredMatches.filter(job => job.match_score >= filters.minScore!)
+    }
+
+    // Required skills filter
+    if (filters?.requiredSkills?.length) {
+      filteredMatches = filteredMatches.filter(job => {
+        const jobSkills = job.requirements?.split(',').map((s: string) => s.trim()) || []
+        const requiredSkillsSet = new Set(filters.requiredSkills!.map(s => s.toLowerCase()))
+        const matchingRequiredSkills = jobSkills.filter((skill: string) => 
+          requiredSkillsSet.has(skill.toLowerCase())
+        )
+        return matchingRequiredSkills.length >= (filters.minSkillsMatch || 1)
+      })
+    }
+
+    // Skills confidence level filter
+    if (filters?.skillsConfidenceLevel) {
+      const confidenceLevels = ['low', 'medium', 'high']
+      const minConfidenceIndex = confidenceLevels.indexOf(filters.skillsConfidenceLevel)
+      filteredMatches = filteredMatches.filter(job => {
+        const jobConfidenceIndex = confidenceLevels.indexOf(job.skills_confidence_level)
+        return jobConfidenceIndex >= minConfidenceIndex
+      })
+    }
+
+    // AI enhanced only filter
+    if (filters?.aiEnhancedOnly) {
+      filteredMatches = filteredMatches.filter(job => job.ai_enhanced)
+    }
 
     // Calculate match statistics
     const scores = filteredMatches.map(job => job.match_score)
