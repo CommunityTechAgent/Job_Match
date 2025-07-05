@@ -5,7 +5,7 @@ import { HowItWorks } from "@/components/how-it-works"
 import { SocialProof } from "@/components/social-proof"
 import { PricingSection } from "@/components/pricing-section"
 import { FaqSection } from "@/components/faq-section"
-import { FinalCta } from "@/components/final-cta"
+import FinalCTA from "@/components/final-cta"
 import { Footer } from "@/components/footer"
 
 export default function HomePage() {
@@ -19,7 +19,7 @@ export default function HomePage() {
         <SocialProof />
         <PricingSection />
         <FaqSection />
-        <FinalCta />
+        <FinalCTA />
       </main>
       <Footer />
     </div>
