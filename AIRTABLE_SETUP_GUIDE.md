@@ -58,7 +58,7 @@ This guide will help you set up Airtable as your job content management system, 
 ### Step 1: Update Environment Variables
 Add these to your `.env.local` file:
 
-```env
+\`\`\`env
 # Airtable Configuration
 AIRTABLE_TOKEN=your_personal_access_token_here
 AIRTABLE_BASE_ID=your_base_id_here
@@ -66,13 +66,13 @@ AIRTABLE_TABLE_NAME=Jobs
 
 # Optional: Cron Secret for automated sync
 CRON_SECRET=your_secure_random_string_here
-```
+\`\`\`
 
 ### Step 2: Install Dependencies
 The Airtable package has been added to your project. Run:
-```bash
+\`\`\`bash
 pnpm install
-```
+\`\`\`
 
 ## Phase 3: Database Setup
 
@@ -112,7 +112,7 @@ This creates a comprehensive jobs table with:
 ### Option 1: Vercel Cron (Recommended)
 If deploying to Vercel, add this to your `vercel.json`:
 
-```json
+\`\`\`json
 {
   "crons": [
     {
@@ -121,7 +121,7 @@ If deploying to Vercel, add this to your `vercel.json`:
     }
   ]
 }
-```
+\`\`\`
 
 ### Option 2: External Cron Service
 Use services like:
@@ -214,4 +214,4 @@ For issues with this integration:
 
 **Integration Status**: ✅ Complete
 **Last Updated**: December 2024
-**Version**: 1.0 
+**Version**: 1.0

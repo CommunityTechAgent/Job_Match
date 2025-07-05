@@ -270,4 +270,4 @@ export function getFileMetadata(fileBuffer: Buffer, fileName: string) {
     fileExtension: fileName.toLowerCase().split('.').pop(),
     uploadDate: new Date().toISOString()
   }
-} 
+}

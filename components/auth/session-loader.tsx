@@ -17,4 +17,4 @@ export function SessionLoader({ children }: { children: React.ReactNode }) {
   }
 
   return <>{children}</>
-} 
+}

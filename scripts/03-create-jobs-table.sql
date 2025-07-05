@@ -71,4 +71,4 @@ $$ language 'plpgsql';
 
 -- Create trigger for updated_at
 CREATE TRIGGER update_jobs_updated_at BEFORE UPDATE ON jobs
-    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column(); 
+    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();

@@ -131,4 +131,4 @@ export async function sendWeeklyDigest(user: { email: string, name?: string }, s
     console.error('Weekly digest email send error:', error)
     throw error
   }
-} 
+}

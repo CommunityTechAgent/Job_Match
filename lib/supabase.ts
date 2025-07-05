@@ -1,10 +1,10 @@
 import { createClient } from "@supabase/supabase-js"
 
-let supabaseClient: ReturnType<typeof createClient> | null = null;
+let supabaseClient: ReturnType<typeof createClient> | null = null
 
 export function createSupabaseClient() {
   if (supabaseClient) {
-    return supabaseClient;
+    return supabaseClient
   }
 
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
@@ -13,35 +13,35 @@ export function createSupabaseClient() {
   if (!supabaseUrl || !supabaseAnonKey) {
     // In a client-side context, this might not be an error, so we just don't initialize.
     // Server-side checks should handle missing env vars more strictly.
-    console.warn("Supabase credentials not found. Client not initialized.");
-    console.warn("URL:", supabaseUrl ? "Set" : "Missing");
-    console.warn("Key:", supabaseAnonKey ? "Set" : "Missing");
-    return null;
+    console.warn("Supabase credentials not found. Client not initialized.")
+    console.warn("URL:", supabaseUrl ? "Set" : "Missing")
+    console.warn("Key:", supabaseAnonKey ? "Set" : "Missing")
+    return null
   }
-  
+
   try {
     supabaseClient = createClient(supabaseUrl, supabaseAnonKey, {
       auth: {
         autoRefreshToken: true,
         persistSession: true,
         detectSessionInUrl: true,
-        flowType: 'pkce'
-      }
+        flowType: "pkce",
+      },
     })
-    console.log("Supabase client initialized successfully");
+    console.log("Supabase client initialized successfully")
     return supabaseClient
   } catch (error) {
-    console.error("Error creating Supabase client:", error);
-    return null;
+    console.error("Error creating Supabase client:", error)
+    return null
   }
 }
 
 // For use in client components, where we want a singleton instance.
-export const supabase = createSupabaseClient();
+export const supabase = createSupabaseClient()
 
 // Types for our database
 export type Profile = {
-  id: string  // This is the user_id from auth.users
+  id: string // This is the user_id from auth.users
   email: string
   full_name: string | null
   avatar_url: string | null
@@ -68,22 +68,22 @@ export type Profile = {
   portfolio_url: string | null
   phone: string | null
   date_of_birth: string | null
-  availability_status: 'Available' | 'Open to opportunities' | 'Not looking' | 'Employed' | null
-  work_authorization: 'US Citizen' | 'Permanent Resident' | 'Work Visa' | 'Student Visa' | 'Other' | null
-  remote_preference: 'On-site' | 'Hybrid' | 'Remote' | 'Flexible' | null
-  relocation_willingness: 'Willing to relocate' | 'Open to discussion' | 'Not willing to relocate' | null
+  availability_status: "Available" | "Open to opportunities" | "Not looking" | "Employed" | null
+  work_authorization: "US Citizen" | "Permanent Resident" | "Work Visa" | "Student Visa" | "Other" | null
+  remote_preference: "On-site" | "Hybrid" | "Remote" | "Flexible" | null
+  relocation_willingness: "Willing to relocate" | "Open to discussion" | "Not willing to relocate" | null
   // Resume parsing and AI extraction fields
   resume_text: string | null
   resume_parsed_at: string | null
-  resume_parsing_status: 'pending' | 'processing' | 'completed' | 'failed' | 'skipped' | null
+  resume_parsing_status: "pending" | "processing" | "completed" | "failed" | "skipped" | null
   resume_validation_confidence: number | null
   resume_word_count: number | null
   resume_pages: number | null
-  resume_format: 'pdf' | 'docx' | 'doc' | null
+  resume_format: "pdf" | "docx" | "doc" | null
   ai_skills_extracted: boolean | null
   ai_skills_extraction_date: string | null
   ai_extracted_job_title: string | null
-  ai_extracted_experience_level: 'entry' | 'mid' | 'senior' | 'lead' | 'executive' | null
+  ai_extracted_experience_level: "entry" | "mid" | "senior" | "lead" | "executive" | null
   ai_extracted_skills_confidence: any | null
   created_at: string
   updated_at: string
@@ -132,8 +132,8 @@ export type JobMatch = {
 
 // Database helper functions
 export const createProfile = async (userId: string, email: string, fullName: string) => {
-  const client = createSupabaseClient();
-  if (!client) return { data: null, error: new Error("Supabase client not initialized.") };
+  const client = createSupabaseClient()
+  if (!client) return { data: null, error: new Error("Supabase client not initialized.") }
 
   const { data, error } = await client
     .from("profiles")
@@ -151,16 +151,16 @@ export const createProfile = async (userId: string, email: string, fullName: str
 }
 
 export const getProfile = async (userId: string) => {
-  const client = createSupabaseClient();
-  if (!client) return { data: null, error: new Error("Supabase client not initialized.") };
+  const client = createSupabaseClient()
+  if (!client) return { data: null, error: new Error("Supabase client not initialized.") }
   const { data, error } = await client.from("profiles").select("*").eq("id", userId).single()
 
   return { data, error }
 }
 
 export const updateProfile = async (userId: string, updates: Partial<Profile>) => {
-  const client = createSupabaseClient();
-  if (!client) return { data: null, error: new Error("Supabase client not initialized.") };
+  const client = createSupabaseClient()
+  if (!client) return { data: null, error: new Error("Supabase client not initialized.") }
   const { data, error } = await client
     .from("profiles")
     .update({ ...updates, updated_at: new Date().toISOString() })
@@ -174,22 +174,22 @@ export const updateProfile = async (userId: string, updates: Partial<Profile>) =
 // Resume parsing status update function
 export const updateResumeParsingStatus = async (
   profileId: string,
-  status: 'pending' | 'processing' | 'completed' | 'failed' | 'skipped',
+  status: "pending" | "processing" | "completed" | "failed" | "skipped",
   resumeText?: string,
   wordCount?: number,
   pages?: number,
   formatType?: string,
-  validationConfidence?: number
+  validationConfidence?: number,
 ) => {
-  const client = createSupabaseClient();
-  if (!client) return { data: null, error: new Error("Supabase client not initialized.") };
+  const client = createSupabaseClient()
+  if (!client) return { data: null, error: new Error("Supabase client not initialized.") }
 
   const updates: any = {
     resume_parsing_status: status,
-    updated_at: new Date().toISOString()
+    updated_at: new Date().toISOString(),
   }
 
-  if (status === 'completed') {
+  if (status === "completed") {
     updates.resume_parsed_at = new Date().toISOString()
   }
 
@@ -199,12 +199,7 @@ export const updateResumeParsingStatus = async (
   if (formatType !== undefined) updates.resume_format = formatType
   if (validationConfidence !== undefined) updates.resume_validation_confidence = validationConfidence
 
-  const { data, error } = await client
-    .from("profiles")
-    .update(updates)
-    .eq("id", profileId)
-    .select()
-    .single()
+  const { data, error } = await client.from("profiles").update(updates).eq("id", profileId).select().single()
 
   return { data, error }
 }
@@ -215,14 +210,14 @@ export const updateAiSkillsExtractionStatus = async (
   extracted: boolean,
   jobTitle?: string,
   experienceLevel?: string,
-  skillsConfidence?: any
+  skillsConfidence?: any,
 ) => {
-  const client = createSupabaseClient();
-  if (!client) return { data: null, error: new Error("Supabase client not initialized.") };
+  const client = createSupabaseClient()
+  if (!client) return { data: null, error: new Error("Supabase client not initialized.") }
 
   const updates: any = {
     ai_skills_extracted: extracted,
-    updated_at: new Date().toISOString()
+    updated_at: new Date().toISOString(),
   }
 
   if (extracted) {
@@ -233,12 +228,7 @@ export const updateAiSkillsExtractionStatus = async (
   if (experienceLevel !== undefined) updates.ai_extracted_experience_level = experienceLevel
   if (skillsConfidence !== undefined) updates.ai_extracted_skills_confidence = skillsConfidence
 
-  const { data, error } = await client
-    .from("profiles")
-    .update(updates)
-    .eq("id", profileId)
-    .select()
-    .single()
+  const { data, error } = await client.from("profiles").update(updates).eq("id", profileId).select().single()
 
   return { data, error }
 }

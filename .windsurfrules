@@ -82,7 +82,7 @@ alwaysApply: true
 
 - **Task File Format Reference**
 
-  ```
+  \`\`\`
   # Task ID: <id>
   # Title: <title>
   # Status: <status>
@@ -94,7 +94,7 @@ alwaysApply: true
 
   # Test Strategy:
   <verification approach>
-  ```
+  \`\`\`
 
 - **Command Reference: parse-prd**
 
@@ -385,7 +385,7 @@ The below describes how you should be structuring new rule sections in this docu
 
 - **Required Rule Structure:**
 
-  ```markdown
+  \`\`\`markdown
   ---
   description: Clear, one-line description of what the rule enforces
   globs: path/to/files/*.ext, other/path/**/*
@@ -395,7 +395,7 @@ The below describes how you should be structuring new rule sections in this docu
   - **Main Points in Bold**
     - Sub-points with details
     - Examples and explanations
-  ```
+  \`\`\`
 
 - **Section References:**
 
@@ -406,13 +406,13 @@ The below describes how you should be structuring new rule sections in this docu
 
   - Use language-specific code blocks
 
-  ```typescript
+  \`\`\`typescript
   // ✅ DO: Show good examples
   const goodExample = true;
 
   // ❌ DON'T: Show anti-patterns
   const badExample = false;
-  ```
+  \`\`\`
 
 - **Rule Content Guidelines:**
 
@@ -480,7 +480,7 @@ alwaysApply: true
 
 - **Example Pattern Recognition:**
 
-  ```typescript
+  \`\`\`typescript
   // If you see repeated patterns like:
   const data = await prisma.user.findMany({
     select: { id: true, email: true },
@@ -491,7 +491,7 @@ alwaysApply: true
   // - Standard select fields
   // - Common where conditions
   // - Performance optimization patterns
-  ```
+  \`\`\`
 
 - **Rule Quality Checks:**
 

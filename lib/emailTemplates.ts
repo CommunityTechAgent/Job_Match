@@ -257,4 +257,4 @@ export const replaceTemplateVariables = (template: string, variables: Record<str
     result = result.replace(new RegExp(`{{${key}}}`, 'g'), value)
   })
   return result
-} 
+}

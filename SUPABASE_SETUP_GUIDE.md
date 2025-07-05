@@ -16,10 +16,10 @@
 ### 1.3 Update Your Environment Variables
 Replace the placeholder values in your `.env.local` file:
 
-```env
+\`\`\`env
 NEXT_PUBLIC_SUPABASE_URL=https://your-actual-project-id.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
-```
+\`\`\`
 
 ## Step 2: Create Database Tables
 
@@ -30,7 +30,7 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 ### 2.2 Create Profiles Table
 Run this SQL:
 
-```sql
+\`\`\`sql
 -- Create profiles table
 CREATE TABLE profiles (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
@@ -62,12 +62,12 @@ CREATE POLICY "Users can update own profile" ON profiles
 
 CREATE POLICY "Users can insert own profile" ON profiles
   FOR INSERT WITH CHECK (auth.uid() = user_id);
-```
+\`\`\`
 
 ### 2.3 Create Job Matches Table
 Run this SQL:
 
-```sql
+\`\`\`sql
 -- Create job_matches table
 CREATE TABLE job_matches (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
@@ -98,7 +98,7 @@ CREATE POLICY "Users can insert own job matches" ON job_matches
 
 CREATE POLICY "Users can update own job matches" ON job_matches
   FOR UPDATE USING (auth.uid() = user_id);
-```
+\`\`\`
 
 ## Step 3: Enable Authentication
 
@@ -128,4 +128,4 @@ This usually means:
 ### Connection Issues
 1. Check your internet connection
 2. Verify the Supabase project is not paused
-3. Ensure environment variables are loaded (restart your dev server) 
+3. Ensure environment variables are loaded (restart your dev server)

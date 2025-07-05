@@ -22,4 +22,4 @@ export async function GET(request: NextRequest) {
 // Also support POST method for flexibility
 export async function POST(request: NextRequest) {
   return GET(request)
-} 
+}

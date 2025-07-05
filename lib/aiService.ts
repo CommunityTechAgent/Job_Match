@@ -376,4 +376,4 @@ export async function testAIConfiguration(): Promise<boolean> {
     console.error('AI configuration test failed:', error)
     return false
   }
-} 
+}

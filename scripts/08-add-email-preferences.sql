@@ -92,4 +92,4 @@ BEGIN
       (p.email_frequency = 'weekly' AND (p.last_email_sent_at IS NULL OR p.last_email_sent_at < NOW() - INTERVAL '7 days'))
     );
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER; 
+$$ LANGUAGE plpgsql SECURITY DEFINER;

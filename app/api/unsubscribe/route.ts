@@ -84,4 +84,4 @@ export async function GET(request: NextRequest) {
       { status: 500 }
     )
   }
-} 
+}
