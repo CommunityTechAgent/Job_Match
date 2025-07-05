@@ -1,13 +1,14 @@
 "use client"
 
-import { useState, useCallback } from "react"
+import { useState, useCallback, useEffect } from "react"
 import { useAuth } from "@/contexts/auth-context"
+import { createSupabaseClient } from "@/lib/supabase"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Progress } from "@/components/ui/progress"
 import { Badge } from "@/components/ui/badge"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import { Upload, FileText, X, Download, Eye, AlertCircle, CheckCircle } from "lucide-react"
+import { Upload, FileText, X, Download, Eye, AlertCircle, CheckCircle, Loader2, Brain, Sparkles } from "lucide-react"
 import { toast } from "sonner"
 import { v4 as uuidv4 } from "uuid"
 
@@ -19,7 +20,13 @@ interface ResumeFile {
 }
 
 export function ResumeUpload() {
-  const { user, profile, supabase } = useAuth()
+  const { user, profile } = useAuth()
+  const [processingStatus, setProcessingStatus] = useState<'idle' | 'uploading' | 'processing' | 'extracting' | 'completed' | 'failed'>('idle')
+  const [processingProgress, setProcessingProgress] = useState(0)
+  const [extractedSkills, setExtractedSkills] = useState<string[]>([])
+  const [jobTitle, setJobTitle] = useState<string>('')
+  const [experienceLevel, setExperienceLevel] = useState<string>('')
+  const [statusPolling, setStatusPolling] = useState<NodeJS.Timeout | null>(null)
   const [file, setFile] = useState<ResumeFile | null>(null)
   const [uploading, setUploading] = useState(false)
   const [progress, setProgress] = useState(0)
@@ -103,12 +110,19 @@ export function ResumeUpload() {
     }
   }, [handleFileSelect])
 
-  // Upload file
+  // Upload file with new processing pipeline
   const handleUpload = async () => {
-    if (!file || !user || !supabase) return
+    if (!file || !user) return
+
+    const supabase = createSupabaseClient()
+    if (!supabase) {
+      setError('Failed to initialize database connection')
+      return
+    }
 
     try {
       setUploading(true)
+      setProcessingStatus('uploading')
       setProgress(0)
       setError(null)
 
@@ -133,14 +147,8 @@ export function ResumeUpload() {
 
       if (uploadError) throw uploadError
 
-      // Create signed URL for preview
-      const { data: signedUrlData } = await supabase.storage
-        .from('resumes')
-        .createSignedUrl(fileName, 3600) // 1 hour expiry
-
-      if (!signedUrlData?.signedUrl) {
-        throw new Error('Failed to create signed URL')
-      }
+      setProgress(50)
+      setProcessingStatus('processing')
 
       // Update user profile with resume reference
       const { error: profileError } = await supabase
@@ -148,13 +156,44 @@ export function ResumeUpload() {
         .update({
           resume_path: fileName,
           resume_filename: file.name,
-          resume_updated_at: new Date().toISOString()
+          resume_updated_at: new Date().toISOString(),
+          resume_parsing_status: 'pending'
         })
         .eq('id', user.id)
 
       if (profileError) throw profileError
 
-      toast.success('Resume uploaded successfully!')
+      setProgress(75)
+      setProcessingStatus('extracting')
+
+      // Process resume with AI extraction
+      const formData = new FormData()
+      formData.append('file', actualFile)
+      formData.append('profileId', user.id)
+
+      const processResponse = await fetch('/api/resume/process', {
+        method: 'POST',
+        body: formData
+      })
+
+      if (!processResponse.ok) {
+        const errorData = await processResponse.json()
+        throw new Error(errorData.error || 'Failed to process resume')
+      }
+
+      const processData = await processResponse.json()
+      
+      setProgress(100)
+      setProcessingStatus('completed')
+      
+      // Update extracted data
+      if (processData.data) {
+        setExtractedSkills(processData.data.skills || [])
+        setJobTitle(processData.data.jobTitle || '')
+        setExperienceLevel(processData.data.experienceLevel || '')
+      }
+
+      toast.success('Resume uploaded and processed successfully!')
       setFile(null)
       setProgress(0)
       
@@ -167,6 +206,7 @@ export function ResumeUpload() {
       console.error('Upload error:', error)
       const errorMessage = error instanceof Error ? error.message : 'Upload failed'
       setError(errorMessage)
+      setProcessingStatus('failed')
       toast.error(`Upload failed: ${errorMessage}`)
     } finally {
       setUploading(false)
@@ -175,7 +215,13 @@ export function ResumeUpload() {
 
   // Delete current resume
   const handleDelete = async () => {
-    if (!user || !supabase || !profile?.resume_path) return
+    if (!user || !profile?.resume_path) return
+
+    const supabase = createSupabaseClient()
+    if (!supabase) {
+      setError('Failed to initialize database connection')
+      return
+    }
 
     try {
       // Delete from storage
@@ -191,7 +237,9 @@ export function ResumeUpload() {
         .update({
           resume_path: null,
           resume_filename: null,
-          resume_updated_at: null
+          resume_updated_at: null,
+          resume_parsing_status: null,
+          ai_skills_extracted: false
         })
         .eq('id', user.id)
 
@@ -207,7 +255,10 @@ export function ResumeUpload() {
 
   // Get signed URL for current resume
   const getCurrentResumeUrl = async () => {
-    if (!profile?.resume_path || !supabase) return null
+    if (!profile?.resume_path) return null
+
+    const supabase = createSupabaseClient()
+    if (!supabase) return null
 
     try {
       const { data: signedUrlData } = await supabase.storage
@@ -227,6 +278,79 @@ export function ResumeUpload() {
     const i = Math.floor(Math.log(bytes) / Math.log(k))
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i]
   }
+
+  // Poll processing status
+  const pollProcessingStatus = useCallback(async () => {
+    if (!user?.id) return
+
+    try {
+      const response = await fetch(`/api/resume/process?profileId=${user.id}`)
+      if (response.ok) {
+        const data = await response.json()
+        if (data.success && data.data) {
+          const { resumeParsing, aiSkillsExtraction, overallStatus } = data.data
+          
+          // Update processing status based on overall status
+          if (overallStatus === 'processing') {
+            setProcessingStatus('processing')
+            setProcessingProgress(50)
+          } else if (overallStatus === 'text_extracted') {
+            setProcessingStatus('extracting')
+            setProcessingProgress(75)
+          } else if (overallStatus === 'fully_processed') {
+            setProcessingStatus('completed')
+            setProcessingProgress(100)
+            
+            // Update extracted data
+            if (aiSkillsExtraction.skills) {
+              setExtractedSkills(aiSkillsExtraction.skills)
+            }
+            if (aiSkillsExtraction.jobTitle) {
+              setJobTitle(aiSkillsExtraction.jobTitle)
+            }
+            if (aiSkillsExtraction.experienceLevel) {
+              setExperienceLevel(aiSkillsExtraction.experienceLevel)
+            }
+            
+            // Stop polling
+            if (statusPolling) {
+              clearInterval(statusPolling)
+              setStatusPolling(null)
+            }
+          } else if (overallStatus === 'failed') {
+            setProcessingStatus('failed')
+            if (statusPolling) {
+              clearInterval(statusPolling)
+              setStatusPolling(null)
+            }
+          }
+        }
+      }
+    } catch (error) {
+      console.error('Error polling status:', error)
+    }
+  }, [user?.id, statusPolling])
+
+  // Start polling when processing begins
+  useEffect(() => {
+    if (processingStatus === 'processing' || processingStatus === 'extracting') {
+      if (!statusPolling) {
+        const interval = setInterval(pollProcessingStatus, 2000) // Poll every 2 seconds
+        setStatusPolling(interval)
+      }
+    } else if (processingStatus === 'completed' || processingStatus === 'failed') {
+      if (statusPolling) {
+        clearInterval(statusPolling)
+        setStatusPolling(null)
+      }
+    }
+
+    return () => {
+      if (statusPolling) {
+        clearInterval(statusPolling)
+      }
+    }
+  }, [processingStatus, statusPolling, pollProcessingStatus])
 
   return (
     <Card>
@@ -256,6 +380,35 @@ export function ResumeUpload() {
                       'recently'
                     }
                   </p>
+                  {/* Processing Status */}
+                  {profile.resume_parsing_status && (
+                    <div className="flex items-center gap-2 mt-1">
+                      {profile.resume_parsing_status === 'processing' && (
+                        <div className="flex items-center gap-1 text-blue-600">
+                          <Loader2 className="h-3 w-3 animate-spin" />
+                          <span className="text-xs">Processing...</span>
+                        </div>
+                      )}
+                      {profile.resume_parsing_status === 'completed' && (
+                        <div className="flex items-center gap-1 text-green-600">
+                          <CheckCircle className="h-3 w-3" />
+                          <span className="text-xs">Text extracted</span>
+                        </div>
+                      )}
+                      {profile.resume_parsing_status === 'failed' && (
+                        <div className="flex items-center gap-1 text-red-600">
+                          <AlertCircle className="h-3 w-3" />
+                          <span className="text-xs">Processing failed</span>
+                        </div>
+                      )}
+                      {profile.ai_skills_extracted && (
+                        <div className="flex items-center gap-1 text-purple-600">
+                          <Brain className="h-3 w-3" />
+                          <span className="text-xs">AI skills extracted</span>
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
               </div>
               <div className="flex gap-2">
@@ -296,6 +449,38 @@ export function ResumeUpload() {
                 </Button>
               </div>
             </div>
+            
+            {/* AI Extraction Results */}
+            {profile.ai_skills_extracted && profile.skills && profile.skills.length > 0 && (
+              <div className="mt-4 p-3 bg-purple-50 border border-purple-200 rounded-lg">
+                <div className="flex items-center gap-2 mb-2">
+                  <Sparkles className="h-4 w-4 text-purple-600" />
+                  <span className="text-sm font-medium text-purple-900">AI Extracted Skills</span>
+                </div>
+                <div className="flex flex-wrap gap-1">
+                  {profile.skills.slice(0, 10).map((skill, index) => (
+                    <Badge key={index} variant="secondary" className="text-xs">
+                      {skill}
+                    </Badge>
+                  ))}
+                  {profile.skills.length > 10 && (
+                    <Badge variant="outline" className="text-xs">
+                      +{profile.skills.length - 10} more
+                    </Badge>
+                  )}
+                </div>
+                {profile.ai_extracted_job_title && (
+                  <p className="text-xs text-purple-700 mt-2">
+                    <strong>Job Title:</strong> {profile.ai_extracted_job_title}
+                  </p>
+                )}
+                {profile.ai_extracted_experience_level && (
+                  <p className="text-xs text-purple-700">
+                    <strong>Experience Level:</strong> {profile.ai_extracted_experience_level}
+                  </p>
+                )}
+              </div>
+            )}
           </div>
         )}
 
@@ -374,7 +559,18 @@ export function ResumeUpload() {
         {uploading && (
           <div className="space-y-2">
             <div className="flex justify-between text-sm">
-              <span>Uploading...</span>
+              <span className="flex items-center gap-2">
+                {processingStatus === 'uploading' && <Upload className="h-3 w-3" />}
+                {processingStatus === 'processing' && <Loader2 className="h-3 w-3 animate-spin" />}
+                {processingStatus === 'extracting' && <Brain className="h-3 w-3" />}
+                {processingStatus === 'completed' && <CheckCircle className="h-3 w-3" />}
+                {processingStatus === 'failed' && <AlertCircle className="h-3 w-3" />}
+                {processingStatus === 'uploading' && 'Uploading...'}
+                {processingStatus === 'processing' && 'Processing resume...'}
+                {processingStatus === 'extracting' && 'Extracting skills with AI...'}
+                {processingStatus === 'completed' && 'Completed!'}
+                {processingStatus === 'failed' && 'Failed'}
+              </span>
               <span>{progress}%</span>
             </div>
             <Progress value={progress} className="w-full" />

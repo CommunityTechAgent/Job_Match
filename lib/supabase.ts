@@ -72,6 +72,19 @@ export type Profile = {
   work_authorization: 'US Citizen' | 'Permanent Resident' | 'Work Visa' | 'Student Visa' | 'Other' | null
   remote_preference: 'On-site' | 'Hybrid' | 'Remote' | 'Flexible' | null
   relocation_willingness: 'Willing to relocate' | 'Open to discussion' | 'Not willing to relocate' | null
+  // Resume parsing and AI extraction fields
+  resume_text: string | null
+  resume_parsed_at: string | null
+  resume_parsing_status: 'pending' | 'processing' | 'completed' | 'failed' | 'skipped' | null
+  resume_validation_confidence: number | null
+  resume_word_count: number | null
+  resume_pages: number | null
+  resume_format: 'pdf' | 'docx' | 'doc' | null
+  ai_skills_extracted: boolean | null
+  ai_skills_extraction_date: string | null
+  ai_extracted_job_title: string | null
+  ai_extracted_experience_level: 'entry' | 'mid' | 'senior' | 'lead' | 'executive' | null
+  ai_extracted_skills_confidence: any | null
   created_at: string
   updated_at: string
 }
@@ -152,6 +165,78 @@ export const updateProfile = async (userId: string, updates: Partial<Profile>) =
     .from("profiles")
     .update({ ...updates, updated_at: new Date().toISOString() })
     .eq("id", userId)
+    .select()
+    .single()
+
+  return { data, error }
+}
+
+// Resume parsing status update function
+export const updateResumeParsingStatus = async (
+  profileId: string,
+  status: 'pending' | 'processing' | 'completed' | 'failed' | 'skipped',
+  resumeText?: string,
+  wordCount?: number,
+  pages?: number,
+  formatType?: string,
+  validationConfidence?: number
+) => {
+  const client = createSupabaseClient();
+  if (!client) return { data: null, error: new Error("Supabase client not initialized.") };
+
+  const updates: any = {
+    resume_parsing_status: status,
+    updated_at: new Date().toISOString()
+  }
+
+  if (status === 'completed') {
+    updates.resume_parsed_at = new Date().toISOString()
+  }
+
+  if (resumeText !== undefined) updates.resume_text = resumeText
+  if (wordCount !== undefined) updates.resume_word_count = wordCount
+  if (pages !== undefined) updates.resume_pages = pages
+  if (formatType !== undefined) updates.resume_format = formatType
+  if (validationConfidence !== undefined) updates.resume_validation_confidence = validationConfidence
+
+  const { data, error } = await client
+    .from("profiles")
+    .update(updates)
+    .eq("id", profileId)
+    .select()
+    .single()
+
+  return { data, error }
+}
+
+// AI skills extraction status update function
+export const updateAiSkillsExtractionStatus = async (
+  profileId: string,
+  extracted: boolean,
+  jobTitle?: string,
+  experienceLevel?: string,
+  skillsConfidence?: any
+) => {
+  const client = createSupabaseClient();
+  if (!client) return { data: null, error: new Error("Supabase client not initialized.") };
+
+  const updates: any = {
+    ai_skills_extracted: extracted,
+    updated_at: new Date().toISOString()
+  }
+
+  if (extracted) {
+    updates.ai_skills_extraction_date = new Date().toISOString()
+  }
+
+  if (jobTitle !== undefined) updates.ai_extracted_job_title = jobTitle
+  if (experienceLevel !== undefined) updates.ai_extracted_experience_level = experienceLevel
+  if (skillsConfidence !== undefined) updates.ai_extracted_skills_confidence = skillsConfidence
+
+  const { data, error } = await client
+    .from("profiles")
+    .update(updates)
+    .eq("id", profileId)
     .select()
     .single()
 
