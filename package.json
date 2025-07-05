@@ -6,7 +6,10 @@
     "build": "next build",
     "dev": "next dev",
     "lint": "next lint",
-    "start": "next start"
+    "start": "next start",
+    "version:patch": "node -e \"const pkg=require('./package.json'); const v=pkg.version.split('.'); pkg.version=v[0]+'.'+v[1]+'.'+(parseInt(v[2])+1); require('fs').writeFileSync('package.json',JSON.stringify(pkg,null,2)+'\\n'); console.log('Bumped to '+pkg.version);\"",
+    "version:minor": "node -e \"const pkg=require('./package.json'); const v=pkg.version.split('.'); pkg.version=v[0]+'.'+(parseInt(v[1])+1)+'.0'; require('fs').writeFileSync('package.json',JSON.stringify(pkg,null,2)+'\\n'); console.log('Bumped to '+pkg.version);\"",
+    "version:major": "node -e \"const pkg=require('./package.json'); const v=pkg.version.split('.'); pkg.version=(parseInt(v[0])+1)+'.0.0'; require('fs').writeFileSync('package.json',JSON.stringify(pkg,null,2)+'\\n'); console.log('Bumped to '+pkg.version);\""
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.1",

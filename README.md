@@ -1,8 +1,13 @@
-# JobMatch V1.1
+# JobMatch V2.0
 
 AI-Powered Job Discovery Platform with Supabase Integration & Airtable Sync
 
-## 🚀 Version 1.1 Features
+## 🚀 Version 2.0 Features
+
+- **Error Boundary System** - Robust error handling and recovery
+- **Improved Chunk Loading** - Better webpack configuration and timeout handling
+- **Version Management** - Automated versioning with git tags
+- **Enhanced Stability** - Fixed chunk loading issues and network timeouts
 
 - **Complete Landing Page** - Professional, conversion-focused design
 - **User Authentication** - Supabase-powered sign up/sign in system
@@ -96,16 +101,55 @@ AI-Powered Job Discovery Platform with Supabase Integration & Airtable Sync
 - Supabase Auth integration
 - Protected routes and dashboard access
 
+## Version Management
+
+### Current Version: 2.0.0
+
+The project uses semantic versioning (MAJOR.MINOR.PATCH) with automated git tagging.
+
+### Version Bumping
+
+**Using npm scripts (recommended):**
+```bash
+# Patch release (2.0.0 -> 2.0.1)
+pnpm version:patch
+
+# Minor release (2.0.0 -> 2.1.0)
+pnpm version:minor
+
+# Major release (2.0.0 -> 3.0.0)
+pnpm version:major
+```
+
+**Using PowerShell script (Windows):**
+```powershell
+.\scripts\version.ps1 patch
+.\scripts\version.ps1 minor
+.\scripts\version.ps1 major
+```
+
+**Using Bash script (Linux/Mac):**
+```bash
+./scripts/version.sh patch
+./scripts/version.sh minor
+./scripts/version.sh major
+```
+
+### Version History
+- **v2.0.0** - Error boundary system, improved chunk loading, version management
+- **v1.1.0** - Airtable integration, complete landing page, user authentication
+
 ## Git Status
 ✅ Initialized and ready for development
-✅ V1.1 with Airtable integration committed
+✅ V2.0 with error boundary and version management committed
 ✅ Supabase connection tested and working
 ✅ Airtable sync system implemented
+✅ Version management system in place
 
 ## Documentation
 - `AIRTABLE_SETUP_GUIDE.md` - Complete Airtable integration guide
 - `SUPABASE_SETUP_GUIDE.md` - Supabase setup instructions
-- `scripts/` - Database setup scripts
+- `scripts/` - Database setup scripts and version management
 
 ---
-*JobMatch V1.1 - Ready for production deployment with Airtable integration* 
+*JobMatch V2.0 - Enhanced stability and version management* 
