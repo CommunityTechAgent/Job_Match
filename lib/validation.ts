@@ -492,4 +492,4 @@ export const validationUtils = {
       ? `${fieldName} must be no more than ${maxLength} characters` 
       : null
   }
-} 
+}

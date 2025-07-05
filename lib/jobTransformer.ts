@@ -140,4 +140,4 @@ export function jobsAreDifferent(job1: SupabaseJob, job2: SupabaseJob): boolean 
   }
 
   return false
-} 
+}

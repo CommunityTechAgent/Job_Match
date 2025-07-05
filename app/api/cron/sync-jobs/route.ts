@@ -57,4 +57,4 @@ export async function GET() {
     message: 'Cron endpoint is active',
     timestamp: new Date().toISOString()
   })
-} 
+}

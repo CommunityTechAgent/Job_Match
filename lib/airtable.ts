@@ -146,4 +146,4 @@ export async function fetchActiveJobsWithRateLimit(): Promise<AirtableJobRecord[
   await delay(200) // 200ms delay between requests
   
   return jobs
-} 
+}

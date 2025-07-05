@@ -58,4 +58,4 @@ export async function POST(request: NextRequest) {
 // Airtable may send a GET request to verify the endpoint
 export async function GET() {
   return NextResponse.json({ message: 'Airtable webhook endpoint is active.' });
-} 
+}

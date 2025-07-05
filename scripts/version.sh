@@ -147,4 +147,4 @@ if [ $# -eq 0 ]; then
     exit 1
 fi
 
-bump_version "$1" 
+bump_version "$1"

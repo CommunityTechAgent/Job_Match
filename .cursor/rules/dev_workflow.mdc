@@ -157,14 +157,14 @@ The parse-prd's `--append` flag enables the user to parse multple PRDs within ta
 ### Workflow Transition Examples
 
 **Example 1: Simple → Team-Based**
-```
+\`\`\`
 User: "Alice is going to help with the API work"
 Your Response: "Great! To avoid conflicts, I'll create a separate task context for your work. Alice can continue with the master list while you work in your own context. When you're ready to merge, we can coordinate the tasks back together."
 Action: add_tag my-api-work --copy-from-current --description="My API tasks while collaborating with Alice"
-```
+\`\`\`
 
 **Example 2: Simple → PRD-Driven**
-```
+\`\`\`
 User: "I want to add a complete user dashboard with analytics, user management, and reporting"
 Your Response: "This sounds like a major feature that would benefit from detailed planning. Let me create a dedicated context for this work and we can draft a PRD together to ensure we capture all requirements."
 Actions: 
@@ -172,10 +172,10 @@ Actions:
 2. Collaborate on PRD creation
 3. parse_prd dashboard-prd.txt --tag=feature-dashboard
 4. Add high-level "User Dashboard" task to master
-```
+\`\`\`
 
 **Example 3: Existing Project → Strategic Planning**
-```
+\`\`\`
 User: "I just initialized Taskmaster on my existing React app. It's getting messy and I want to improve it."
 Your Response: "Let me research your codebase to understand the current architecture, then we can create a strategic plan for improvements."
 Actions:
@@ -183,7 +183,7 @@ Actions:
 2. Collaborate on improvement PRD based on findings
 3. Create tags for different improvement areas (refactor-components, improve-state-management, etc.)
 4. Keep only major improvement initiatives in master
-```
+\`\`\`
 
 ---
 

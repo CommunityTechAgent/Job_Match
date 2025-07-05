@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react"
 import { useAuth } from "@/contexts/auth-context"
+import { createSupabaseClient } from "@/lib/supabase"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -12,18 +13,29 @@ import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Progress } from "@/components/ui/progress"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Badge } from "@/components/ui/badge"
-import { 
-  User, MapPin, Briefcase, Calendar, Phone, Globe, Linkedin, Github, 
-  Save, Loader2, CheckCircle, AlertCircle, Star, Building, GraduationCap,
-  Camera, FileText, Tag, DollarSign, Clock, Users, Target
+import {
+  User,
+  MapPin,
+  Briefcase,
+  Phone,
+  Globe,
+  Linkedin,
+  Github,
+  Save,
+  Loader2,
+  CheckCircle,
+  AlertCircle,
+  Star,
+  Building,
+  Target,
+  FileText,
+  Plus,
 } from "lucide-react"
 import { toast } from "sonner"
-import { type Profile, type EducationEntry, type SalaryRange } from "@/lib/supabase"
-import { profileValidator, validationUtils } from "@/lib/validation"
-import { ProfileImageUpload } from "./profile-image-upload"
-import { ResumeUpload } from "./resume-upload"
-import { SkillsSelector } from "./skills-selector"
-import { EducationManager } from "./education-manager"
+import type { Profile, EducationEntry, SalaryRange } from "@/lib/supabase"
+import { profileValidator } from "@/lib/validation"
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar"
+// Remove these imports for now - we'll create inline versions
 
 interface EnhancedProfileFormData {
   // Basic Information
@@ -33,14 +45,14 @@ interface EnhancedProfileFormData {
   location: string
   phone: string
   date_of_birth: string
-  
+
   // Professional Information
   job_title: string
   experience_level: string
   experience_years: number
   skills: string[]
   education: EducationEntry[]
-  
+
   // Preferences
   preferred_job_types: string[]
   preferred_locations: string[]
@@ -49,7 +61,7 @@ interface EnhancedProfileFormData {
   work_authorization: string
   remote_preference: string
   relocation_willingness: string
-  
+
   // Social Links
   website: string
   linkedin_url: string
@@ -58,7 +70,7 @@ interface EnhancedProfileFormData {
 }
 
 export function EnhancedProfileForm() {
-  const { profile, updateProfile, loading } = useAuth()
+  const { user, profile, updateProfile, loading } = useAuth()
   const [saving, setSaving] = useState(false)
   const [success, setSuccess] = useState(false)
   const [errors, setErrors] = useState<Record<string, string>>({})
@@ -84,7 +96,7 @@ export function EnhancedProfileForm() {
     website: "",
     linkedin_url: "",
     github_url: "",
-    portfolio_url: ""
+    portfolio_url: "",
   })
 
   // Load profile data
@@ -112,7 +124,7 @@ export function EnhancedProfileForm() {
         website: profile.website || "",
         linkedin_url: profile.linkedin_url || "",
         github_url: profile.github_url || "",
-        portfolio_url: profile.portfolio_url || ""
+        portfolio_url: profile.portfolio_url || "",
       })
     }
   }, [profile])
@@ -131,15 +143,19 @@ export function EnhancedProfileForm() {
       formData.preferred_job_types.length,
       formData.preferred_locations.length,
       formData.preferred_salary_range.min > 0,
-      formData.education.length
+      formData.education.length,
     ]
-    
-    const completedFields = fields.filter(field => 
-      typeof field === 'string' ? field.trim() !== '' : 
-      typeof field === 'number' ? field > 0 : 
-      Array.isArray(field) ? field.length > 0 : field
+
+    const completedFields = fields.filter((field) =>
+      typeof field === "string"
+        ? field.trim() !== ""
+        : typeof field === "number"
+          ? field > 0
+          : Array.isArray(field)
+            ? field.length > 0
+            : field,
     ).length
-    
+
     return Math.round((completedFields / fields.length) * 100)
   }, [formData])
 
@@ -147,11 +163,11 @@ export function EnhancedProfileForm() {
   const validateForm = useCallback((): boolean => {
     const result = profileValidator.validate(formData)
     const errorMap: Record<string, string> = {}
-    
-    result.errors.forEach(error => {
+
+    result.errors.forEach((error) => {
       errorMap[error.field] = error.message
     })
-    
+
     setErrors(errorMap)
     return result.isValid
   }, [formData])
@@ -160,6 +176,12 @@ export function EnhancedProfileForm() {
   const handleSubmit = useCallback(async () => {
     if (!validateForm()) {
       toast.error("Please fix the errors before saving")
+      return
+    }
+
+    const supabase = createSupabaseClient()
+    if (!supabase) {
+      toast.error("Failed to initialize database connection")
       return
     }
 
@@ -183,14 +205,14 @@ export function EnhancedProfileForm() {
         preferred_job_types: formData.preferred_job_types,
         preferred_locations: formData.preferred_locations,
         preferred_salary_range: formData.preferred_salary_range,
-        availability_status: formData.availability_status as Profile['availability_status'],
-        work_authorization: formData.work_authorization as Profile['work_authorization'],
-        remote_preference: formData.remote_preference as Profile['remote_preference'],
-        relocation_willingness: formData.relocation_willingness as Profile['relocation_willingness'],
+        availability_status: formData.availability_status as Profile["availability_status"],
+        work_authorization: formData.work_authorization as Profile["work_authorization"],
+        remote_preference: formData.remote_preference as Profile["remote_preference"],
+        relocation_willingness: formData.relocation_willingness as Profile["relocation_willingness"],
         website: formData.website,
         linkedin_url: formData.linkedin_url,
         github_url: formData.github_url,
-        portfolio_url: formData.portfolio_url
+        portfolio_url: formData.portfolio_url,
       }
 
       const { error } = await updateProfile(profileData)
@@ -201,7 +223,7 @@ export function EnhancedProfileForm() {
 
       setSuccess(true)
       toast.success("Profile updated successfully!")
-      
+
       // Clear success message after 3 seconds
       setTimeout(() => setSuccess(false), 3000)
     } catch (error) {
@@ -213,33 +235,36 @@ export function EnhancedProfileForm() {
   }, [formData, updateProfile, validateForm])
 
   // Handle field changes
-  const handleFieldChange = useCallback((field: keyof EnhancedProfileFormData, value: any) => {
-    setFormData(prev => ({ ...prev, [field]: value }))
-    
-    // Clear error for this field
-    if (errors[field]) {
-      setErrors(prev => ({ ...prev, [field]: "" }))
-    }
-  }, [errors])
+  const handleFieldChange = useCallback(
+    (field: keyof EnhancedProfileFormData, value: any) => {
+      setFormData((prev) => ({ ...prev, [field]: value }))
+
+      // Clear error for this field
+      if (errors[field]) {
+        setErrors((prev) => ({ ...prev, [field]: "" }))
+      }
+    },
+    [errors],
+  )
 
   // Handle array field changes
   const handleArrayFieldChange = useCallback((field: keyof EnhancedProfileFormData, value: string[]) => {
-    setFormData(prev => ({ ...prev, [field]: value }))
+    setFormData((prev) => ({ ...prev, [field]: value }))
   }, [])
 
   // Handle education changes
   const handleEducationChange = useCallback((education: EducationEntry[]) => {
-    setFormData(prev => ({ ...prev, education }))
+    setFormData((prev) => ({ ...prev, education }))
   }, [])
 
   // Handle salary range changes
   const handleSalaryRangeChange = useCallback((field: keyof SalaryRange, value: number | string) => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
       preferred_salary_range: {
         ...prev.preferred_salary_range,
-        [field]: value
-      }
+        [field]: value,
+      },
     }))
   }, [])
 
@@ -287,9 +312,7 @@ export function EnhancedProfileForm() {
       {Object.keys(errors).length > 0 && (
         <Alert variant="destructive">
           <AlertCircle className="h-4 w-4" />
-          <AlertDescription>
-            Please fix the following errors: {Object.values(errors).join(", ")}
-          </AlertDescription>
+          <AlertDescription>Please fix the following errors: {Object.values(errors).join(", ")}</AlertDescription>
         </Alert>
       )}
 
@@ -309,9 +332,7 @@ export function EnhancedProfileForm() {
                 <User className="h-5 w-5" />
                 Basic Information
               </CardTitle>
-              <CardDescription>
-                Your personal and contact information
-              </CardDescription>
+              <CardDescription>Your personal and contact information</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -324,9 +345,7 @@ export function EnhancedProfileForm() {
                     placeholder="Enter your full name"
                     className={errors.full_name ? "border-red-500" : ""}
                   />
-                  {errors.full_name && (
-                    <p className="text-sm text-red-600">{errors.full_name}</p>
-                  )}
+                  {errors.full_name && <p className="text-sm text-red-600">{errors.full_name}</p>}
                 </div>
 
                 <div className="space-y-2">
@@ -364,9 +383,7 @@ export function EnhancedProfileForm() {
                       className={`pl-10 ${errors.location ? "border-red-500" : ""}`}
                     />
                   </div>
-                  {errors.location && (
-                    <p className="text-sm text-red-600">{errors.location}</p>
-                  )}
+                  {errors.location && <p className="text-sm text-red-600">{errors.location}</p>}
                 </div>
 
                 <div className="space-y-2">
@@ -404,9 +421,7 @@ export function EnhancedProfileForm() {
                 <Briefcase className="h-5 w-5" />
                 Professional Information
               </CardTitle>
-              <CardDescription>
-                Your work experience, skills, and qualifications
-              </CardDescription>
+              <CardDescription>Your work experience, skills, and qualifications</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -441,9 +456,7 @@ export function EnhancedProfileForm() {
                       <SelectItem value="executive">Executive/C-Level</SelectItem>
                     </SelectContent>
                   </Select>
-                  {errors.experience_level && (
-                    <p className="text-sm text-red-600">{errors.experience_level}</p>
-                  )}
+                  {errors.experience_level && <p className="text-sm text-red-600">{errors.experience_level}</p>}
                 </div>
               </div>
 
@@ -460,19 +473,66 @@ export function EnhancedProfileForm() {
                 />
               </div>
 
-              {/* Skills Selector */}
-              <SkillsSelector
-                selectedSkills={formData.skills}
-                onChange={(skills) => handleArrayFieldChange("skills", skills)}
-                disabled={saving}
-              />
+              {/* Skills Selector - Simplified */}
+              <div className="space-y-2">
+                <Label htmlFor="skills">Skills *</Label>
+                <Input
+                  id="skills"
+                  value={formData.skills.join(", ")}
+                  onChange={(e) =>
+                    handleArrayFieldChange(
+                      "skills",
+                      e.target.value
+                        .split(",")
+                        .map((s) => s.trim())
+                        .filter((s) => s),
+                    )
+                  }
+                  placeholder="JavaScript, React, Node.js, Python (comma-separated)"
+                  className={errors.skills ? "border-red-500" : ""}
+                />
+                {errors.skills && <p className="text-sm text-red-600">{errors.skills}</p>}
+                <div className="flex flex-wrap gap-2 mt-2">
+                  {formData.skills.map((skill, index) => (
+                    <Badge key={index} variant="secondary">
+                      {skill}
+                    </Badge>
+                  ))}
+                </div>
+              </div>
 
-              {/* Education Manager */}
-              <EducationManager
-                education={formData.education}
-                onChange={handleEducationChange}
-                disabled={saving}
-              />
+              {/* Education - Simplified */}
+              <div className="space-y-2">
+                <Label>Education</Label>
+                <div className="space-y-4">
+                  <div className="p-4 border rounded-lg">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <Label htmlFor="degree">Degree</Label>
+                        <Input id="degree" placeholder="Bachelor of Science" />
+                      </div>
+                      <div>
+                        <Label htmlFor="field">Field of Study</Label>
+                        <Input id="field" placeholder="Computer Science" />
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                      <div>
+                        <Label htmlFor="school">School</Label>
+                        <Input id="school" placeholder="University Name" />
+                      </div>
+                      <div>
+                        <Label htmlFor="graduation_year">Graduation Year</Label>
+                        <Input id="graduation_year" type="number" placeholder="2020" />
+                      </div>
+                    </div>
+                  </div>
+                  <Button variant="outline" size="sm">
+                    <Plus className="h-4 w-4 mr-2" />
+                    Add Education
+                  </Button>
+                </div>
+              </div>
             </CardContent>
           </Card>
         </TabsContent>
@@ -485,9 +545,7 @@ export function EnhancedProfileForm() {
                 <Target className="h-5 w-5" />
                 Job Preferences
               </CardTitle>
-              <CardDescription>
-                Your job preferences and requirements
-              </CardDescription>
+              <CardDescription>Your job preferences and requirements</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -570,7 +628,15 @@ export function EnhancedProfileForm() {
                 <Label>Preferred Job Types</Label>
                 <Input
                   value={formData.preferred_job_types.join(", ")}
-                  onChange={(e) => handleArrayFieldChange("preferred_job_types", e.target.value.split(",").map(s => s.trim()).filter(s => s))}
+                  onChange={(e) =>
+                    handleArrayFieldChange(
+                      "preferred_job_types",
+                      e.target.value
+                        .split(",")
+                        .map((s) => s.trim())
+                        .filter((s) => s),
+                    )
+                  }
                   placeholder="Full-time, Contract, Part-time (comma-separated)"
                 />
               </div>
@@ -579,7 +645,15 @@ export function EnhancedProfileForm() {
                 <Label>Preferred Locations</Label>
                 <Input
                   value={formData.preferred_locations.join(", ")}
-                  onChange={(e) => handleArrayFieldChange("preferred_locations", e.target.value.split(",").map(s => s.trim()).filter(s => s))}
+                  onChange={(e) =>
+                    handleArrayFieldChange(
+                      "preferred_locations",
+                      e.target.value
+                        .split(",")
+                        .map((s) => s.trim())
+                        .filter((s) => s),
+                    )
+                  }
                   placeholder="New York, NY, Remote, San Francisco, CA (comma-separated)"
                 />
               </div>
@@ -613,7 +687,7 @@ export function EnhancedProfileForm() {
                     <Label htmlFor="salary_currency">Currency</Label>
                     <Select
                       value={formData.preferred_salary_range.currency}
-                      onValueChange={(value) => handleSalaryRangeChange("currency", value)}
+                      onChange={(e) => handleSalaryRangeChange("currency", e.target.value)}
                     >
                       <SelectTrigger>
                         <SelectValue />
@@ -634,11 +708,59 @@ export function EnhancedProfileForm() {
 
         {/* Media & Links Tab */}
         <TabsContent value="media" className="space-y-4">
-          {/* Profile Image Upload */}
-          <ProfileImageUpload />
+          {/* Profile Image Upload - Simplified */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <User className="h-5 w-5" />
+                Profile Image
+              </CardTitle>
+              <CardDescription>Upload a professional profile photo</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="flex items-center space-x-4">
+                <Avatar className="h-20 w-20">
+                  <AvatarImage src={profile?.avatar_url || "/placeholder-user.jpg"} />
+                  <AvatarFallback className="text-lg">
+                    {formData.full_name
+                      ?.split(" ")
+                      .map((n) => n[0])
+                      .join("")
+                      .toUpperCase() || "U"}
+                  </AvatarFallback>
+                </Avatar>
+                <div>
+                  <Button variant="outline" size="sm">
+                    Upload Photo
+                  </Button>
+                  <p className="text-xs text-gray-500 mt-1">JPG, PNG up to 5MB</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
 
-          {/* Resume Upload */}
-          <ResumeUpload />
+          {/* Resume Upload - Simplified */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <FileText className="h-5 w-5" />
+                Resume
+              </CardTitle>
+              <CardDescription>Upload your resume for better job matching</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
+                  <FileText className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                  <p className="text-sm text-gray-600 mb-2">Drop your resume here or click to browse</p>
+                  <Button variant="outline" size="sm">
+                    Choose File
+                  </Button>
+                  <p className="text-xs text-gray-500 mt-2">PDF, DOC, DOCX up to 10MB</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
 
           {/* Social Links */}
           <Card>
@@ -647,9 +769,7 @@ export function EnhancedProfileForm() {
                 <Globe className="h-5 w-5" />
                 Social Links & Portfolio
               </CardTitle>
-              <CardDescription>
-                Add your professional online presence
-              </CardDescription>
+              <CardDescription>Add your professional online presence</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-2">
@@ -706,11 +826,7 @@ export function EnhancedProfileForm() {
 
       {/* Save Button */}
       <div className="flex justify-end">
-        <Button
-          onClick={handleSubmit}
-          disabled={saving}
-          className="bg-red-500 hover:bg-red-600"
-        >
+        <Button onClick={handleSubmit} disabled={saving} className="bg-red-500 hover:bg-red-600">
           {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
           <Save className="mr-2 h-4 w-4" />
           {saving ? "Saving..." : "Save Profile"}
@@ -718,4 +834,4 @@ export function EnhancedProfileForm() {
       </div>
     </div>
   )
-} 
+}

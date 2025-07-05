@@ -260,4 +260,4 @@ END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
 -- Grant execute permission
-GRANT EXECUTE ON FUNCTION get_profile_completeness_score(UUID) TO authenticated; 
+GRANT EXECUTE ON FUNCTION get_profile_completeness_score(UUID) TO authenticated;

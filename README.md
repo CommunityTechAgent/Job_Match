@@ -20,13 +20,13 @@ AI-Powered Job Discovery Platform with Supabase Integration & Airtable Sync
 ## Getting Started
 
 1. Install dependencies:
-   ```
+   \`\`\`
    pnpm install
-   ```
+   \`\`\`
 
 2. Configure environment variables:
    Create a `.env.local` file with your credentials:
-   ```
+   \`\`\`
    # Supabase Configuration
    NEXT_PUBLIC_SUPABASE_URL=your_supabase_project_url
    NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
@@ -38,16 +38,16 @@ AI-Powered Job Discovery Platform with Supabase Integration & Airtable Sync
    
    # Optional: Cron Secret for automated sync
    CRON_SECRET=your_secure_random_string
-   ```
+   \`\`\`
 
 3. Set up your database:
    - Run the SQL scripts in the `scripts/` folder in your Supabase dashboard
    - Follow the `AIRTABLE_SETUP_GUIDE.md` for Airtable configuration
 
 4. Run the development server:
-   ```
+   \`\`\`
    pnpm dev
-   ```
+   \`\`\`
 
 5. Test the connection:
    Visit `http://localhost:3000/test` to verify Supabase setup
@@ -110,7 +110,7 @@ The project uses semantic versioning (MAJOR.MINOR.PATCH) with automated git tagg
 ### Version Bumping
 
 **Using npm scripts (recommended):**
-```bash
+\`\`\`bash
 # Patch release (2.0.0 -> 2.0.1)
 pnpm version:patch
 
@@ -119,21 +119,21 @@ pnpm version:minor
 
 # Major release (2.0.0 -> 3.0.0)
 pnpm version:major
-```
+\`\`\`
 
 **Using PowerShell script (Windows):**
-```powershell
+\`\`\`powershell
 .\scripts\version.ps1 patch
 .\scripts\version.ps1 minor
 .\scripts\version.ps1 major
-```
+\`\`\`
 
 **Using Bash script (Linux/Mac):**
-```bash
+\`\`\`bash
 ./scripts/version.sh patch
 ./scripts/version.sh minor
 ./scripts/version.sh major
-```
+\`\`\`
 
 ### Version History
 - **v2.0.0** - Error boundary system, improved chunk loading, version management
@@ -152,4 +152,4 @@ pnpm version:major
 - `scripts/` - Database setup scripts and version management
 
 ---
-*JobMatch V2.0 - Enhanced stability and version management* 
+*JobMatch V2.0 - Enhanced stability and version management*

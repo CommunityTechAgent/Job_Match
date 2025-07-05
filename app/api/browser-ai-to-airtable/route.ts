@@ -137,4 +137,4 @@ export async function GET() {
     tableName: airtableTableName,
     tokenSet: !!airtableToken
   })
-} 
+}

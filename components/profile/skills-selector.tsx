@@ -1,324 +1,459 @@
 "use client"
 
-import { useState, useEffect, useCallback } from "react"
+import { useState, useCallback } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command"
+import { Command, CommandEmpty, CommandGroup, CommandItem, CommandList } from "@/components/ui/command"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
-import { Check, ChevronsUpDown, Plus, X, Search, Tag } from "lucide-react"
-import { cn } from "@/lib/utils"
-
-// Predefined skill categories and skills
-const SKILL_CATEGORIES = {
-  "Programming Languages": [
-    "JavaScript", "TypeScript", "Python", "Java", "C++", "C#", "Go", "Rust", "Swift", "Kotlin",
-    "PHP", "Ruby", "Scala", "R", "MATLAB", "Perl", "Haskell", "Clojure", "Elixir", "Dart"
-  ],
-  "Frontend Development": [
-    "React", "Vue.js", "Angular", "Svelte", "Next.js", "Nuxt.js", "HTML5", "CSS3", "Sass", "Less",
-    "Tailwind CSS", "Bootstrap", "Material-UI", "Ant Design", "Webpack", "Vite", "Babel", "ESLint"
-  ],
-  "Backend Development": [
-    "Node.js", "Express.js", "Django", "Flask", "Spring Boot", "ASP.NET", "Laravel", "Ruby on Rails",
-    "FastAPI", "Gin", "Echo", "Fiber", "Koa", "Hapi", "Sails.js", "Strapi", "NestJS"
-  ],
-  "Databases": [
-    "PostgreSQL", "MySQL", "MongoDB", "Redis", "SQLite", "Oracle", "SQL Server", "MariaDB",
-    "Cassandra", "DynamoDB", "Firebase", "Supabase", "CouchDB", "Neo4j", "InfluxDB"
-  ],
-  "Cloud & DevOps": [
-    "AWS", "Azure", "Google Cloud", "Docker", "Kubernetes", "Terraform", "Jenkins", "GitLab CI",
-    "GitHub Actions", "Ansible", "Chef", "Puppet", "Vagrant", "Helm", "Istio", "Prometheus"
-  ],
-  "Mobile Development": [
-    "React Native", "Flutter", "Ionic", "Xamarin", "SwiftUI", "Android SDK", "iOS SDK",
-    "Cordova", "PhoneGap", "NativeScript", "Expo", "Firebase Mobile"
-  ],
-  "Data Science & AI": [
-    "TensorFlow", "PyTorch", "Scikit-learn", "Pandas", "NumPy", "Matplotlib", "Seaborn",
-    "Jupyter", "Apache Spark", "Hadoop", "Kafka", "Airflow", "MLflow", "Kubeflow"
-  ],
-  "Design & UX": [
-    "Figma", "Adobe XD", "Sketch", "InVision", "Framer", "Adobe Photoshop", "Adobe Illustrator",
-    "Adobe After Effects", "Principle", "Protopie", "User Research", "Usability Testing"
-  ],
-  "Testing": [
-    "Jest", "Cypress", "Selenium", "Playwright", "Puppeteer", "Mocha", "Chai", "Jasmine",
-    "RTL", "Vitest", "Playwright", "TestCafe", "Appium", "Detox"
-  ],
-  "Other Technologies": [
-    "GraphQL", "REST APIs", "WebSockets", "gRPC", "Microservices", "Serverless", "JAMstack",
-    "Progressive Web Apps", "WebAssembly", "Blockchain", "IoT", "AR/VR", "Game Development"
-  ]
-}
+import { X, Plus, Search, Code, Database, Globe, Smartphone, Palette, BarChart3 } from "lucide-react"
 
 interface SkillsSelectorProps {
   selectedSkills: string[]
   onChange: (skills: string[]) => void
-  maxSkills?: number
-  placeholder?: string
   disabled?: boolean
 }
 
-export function SkillsSelector({ 
-  selectedSkills, 
-  onChange, 
-  maxSkills = 20, 
-  placeholder = "Add skills...",
-  disabled = false 
-}: SkillsSelectorProps) {
-  const [inputValue, setInputValue] = useState("")
+// Comprehensive skills database organized by category
+const SKILLS_DATABASE = {
+  "Programming Languages": [
+    "JavaScript",
+    "TypeScript",
+    "Python",
+    "Java",
+    "C++",
+    "C#",
+    "Go",
+    "Rust",
+    "PHP",
+    "Ruby",
+    "Swift",
+    "Kotlin",
+    "Scala",
+    "R",
+    "MATLAB",
+    "Perl",
+    "Lua",
+    "Dart",
+    "Elixir",
+    "Haskell",
+  ],
+  "Frontend Development": [
+    "React",
+    "Vue.js",
+    "Angular",
+    "Svelte",
+    "Next.js",
+    "Nuxt.js",
+    "HTML5",
+    "CSS3",
+    "SASS",
+    "LESS",
+    "Tailwind CSS",
+    "Bootstrap",
+    "Material-UI",
+    "Ant Design",
+    "Chakra UI",
+    "Styled Components",
+    "Webpack",
+    "Vite",
+    "Parcel",
+    "Rollup",
+  ],
+  "Backend Development": [
+    "Node.js",
+    "Express.js",
+    "Django",
+    "Flask",
+    "FastAPI",
+    "Spring Boot",
+    "ASP.NET",
+    "Ruby on Rails",
+    "Laravel",
+    "Symfony",
+    "NestJS",
+    "Koa.js",
+    "Hapi.js",
+    "Gin",
+    "Echo",
+    "Fiber",
+  ],
+  Databases: [
+    "MySQL",
+    "PostgreSQL",
+    "MongoDB",
+    "Redis",
+    "SQLite",
+    "Oracle",
+    "SQL Server",
+    "Cassandra",
+    "DynamoDB",
+    "Firebase",
+    "Supabase",
+    "PlanetScale",
+    "CockroachDB",
+    "Neo4j",
+    "InfluxDB",
+  ],
+  "Cloud & DevOps": [
+    "AWS",
+    "Azure",
+    "Google Cloud",
+    "Docker",
+    "Kubernetes",
+    "Jenkins",
+    "GitLab CI",
+    "GitHub Actions",
+    "Terraform",
+    "Ansible",
+    "Chef",
+    "Puppet",
+    "Vagrant",
+    "Nginx",
+    "Apache",
+    "Linux",
+    "Ubuntu",
+  ],
+  "Mobile Development": [
+    "React Native",
+    "Flutter",
+    "iOS Development",
+    "Android Development",
+    "Xamarin",
+    "Ionic",
+    "Cordova",
+    "PhoneGap",
+    "Unity",
+    "Unreal Engine",
+  ],
+  "Data Science & AI": [
+    "Machine Learning",
+    "Deep Learning",
+    "TensorFlow",
+    "PyTorch",
+    "Scikit-learn",
+    "Pandas",
+    "NumPy",
+    "Jupyter",
+    "Apache Spark",
+    "Hadoop",
+    "Tableau",
+    "Power BI",
+    "D3.js",
+    "Matplotlib",
+    "Seaborn",
+  ],
+  "Design & UX": [
+    "UI/UX Design",
+    "Figma",
+    "Adobe XD",
+    "Sketch",
+    "Photoshop",
+    "Illustrator",
+    "InVision",
+    "Principle",
+    "Framer",
+    "Zeplin",
+    "User Research",
+    "Wireframing",
+    "Prototyping",
+    "Design Systems",
+  ],
+  "Project Management": [
+    "Agile",
+    "Scrum",
+    "Kanban",
+    "Jira",
+    "Trello",
+    "Asana",
+    "Monday.com",
+    "Notion",
+    "Confluence",
+    "Slack",
+    "Microsoft Teams",
+    "Project Planning",
+    "Risk Management",
+    "Stakeholder Management",
+  ],
+  "Testing & QA": [
+    "Jest",
+    "Cypress",
+    "Selenium",
+    "Playwright",
+    "Testing Library",
+    "Mocha",
+    "Chai",
+    "Jasmine",
+    "Unit Testing",
+    "Integration Testing",
+    "E2E Testing",
+    "Performance Testing",
+    "Load Testing",
+  ],
+}
+
+// Popular skills that appear as quick suggestions
+const POPULAR_SKILLS = [
+  "JavaScript",
+  "React",
+  "Node.js",
+  "Python",
+  "TypeScript",
+  "AWS",
+  "Docker",
+  "Git",
+  "SQL",
+  "MongoDB",
+  "Express.js",
+  "Next.js",
+  "Vue.js",
+  "Angular",
+  "Java",
+  "C++",
+  "Machine Learning",
+  "UI/UX Design",
+  "Agile",
+  "Scrum",
+]
+
+export function SkillsSelector({ selectedSkills, onChange, disabled = false }: SkillsSelectorProps) {
+  const [searchTerm, setSearchTerm] = useState("")
+  const [customSkill, setCustomSkill] = useState("")
   const [isPopoverOpen, setIsPopoverOpen] = useState(false)
-  const [filteredSkills, setFilteredSkills] = useState<string[]>([])
 
-  // Flatten all skills for search
-  const allSkills = Object.values(SKILL_CATEGORIES).flat()
+  // Filter skills based on search term
+  const filteredSkills = useCallback(() => {
+    if (!searchTerm) return []
 
-  // Filter skills based on input
-  useEffect(() => {
-    if (!inputValue.trim()) {
-      setFilteredSkills([])
-      return
-    }
+    const allSkills = Object.values(SKILLS_DATABASE).flat()
+    return allSkills
+      .filter((skill) => skill.toLowerCase().includes(searchTerm.toLowerCase()) && !selectedSkills.includes(skill))
+      .slice(0, 10)
+  }, [searchTerm, selectedSkills])
 
-    const filtered = allSkills.filter(skill => 
-      skill.toLowerCase().includes(inputValue.toLowerCase()) &&
-      !selectedSkills.includes(skill)
-    ).slice(0, 10) // Limit to 10 suggestions
-
-    setFilteredSkills(filtered)
-  }, [inputValue, selectedSkills, allSkills])
-
-  // Add skill
-  const addSkill = useCallback((skill: string) => {
-    const trimmedSkill = skill.trim()
-    if (!trimmedSkill) return
-
-    if (selectedSkills.length >= maxSkills) {
-      return
-    }
-
-    if (!selectedSkills.includes(trimmedSkill)) {
-      onChange([...selectedSkills, trimmedSkill])
-    }
-    setInputValue("")
-    setIsPopoverOpen(false)
-  }, [selectedSkills, onChange, maxSkills])
-
-  // Remove skill
-  const removeSkill = useCallback((skillToRemove: string) => {
-    onChange(selectedSkills.filter(skill => skill !== skillToRemove))
-  }, [selectedSkills, onChange])
-
-  // Handle input change
-  const handleInputChange = (value: string) => {
-    setInputValue(value)
-    if (value.trim()) {
-      setIsPopoverOpen(true)
-    } else {
-      setIsPopoverOpen(false)
-    }
-  }
-
-  // Handle key press
-  const handleKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && inputValue.trim()) {
-      e.preventDefault()
-      addSkill(inputValue)
-    } else if (e.key === 'Backspace' && !inputValue && selectedSkills.length > 0) {
-      removeSkill(selectedSkills[selectedSkills.length - 1])
-    }
-  }
-
-  // Get skill category
-  const getSkillCategory = (skill: string) => {
-    for (const [category, skills] of Object.entries(SKILL_CATEGORIES)) {
-      if (skills.includes(skill)) {
-        return category
+  // Add skill to selection
+  const addSkill = useCallback(
+    (skill: string) => {
+      if (!selectedSkills.includes(skill) && skill.trim()) {
+        onChange([...selectedSkills, skill.trim()])
+        setSearchTerm("")
+        setCustomSkill("")
+        setIsPopoverOpen(false)
       }
+    },
+    [selectedSkills, onChange],
+  )
+
+  // Remove skill from selection
+  const removeSkill = useCallback(
+    (skillToRemove: string) => {
+      onChange(selectedSkills.filter((skill) => skill !== skillToRemove))
+    },
+    [selectedSkills, onChange],
+  )
+
+  // Add custom skill
+  const addCustomSkill = useCallback(() => {
+    if (customSkill.trim() && !selectedSkills.includes(customSkill.trim())) {
+      addSkill(customSkill.trim())
     }
-    return "Other"
+  }, [customSkill, addSkill])
+
+  // Get category icon
+  const getCategoryIcon = (category: string) => {
+    switch (category) {
+      case "Programming Languages":
+        return <Code className="h-4 w-4" />
+      case "Databases":
+        return <Database className="h-4 w-4" />
+      case "Frontend Development":
+        return <Globe className="h-4 w-4" />
+      case "Mobile Development":
+        return <Smartphone className="h-4 w-4" />
+      case "Design & UX":
+        return <Palette className="h-4 w-4" />
+      case "Data Science & AI":
+        return <BarChart3 className="h-4 w-4" />
+      default:
+        return <Code className="h-4 w-4" />
+    }
   }
 
   return (
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
-          <Tag className="h-5 w-5" />
-          Skills
+          <Code className="h-5 w-5" />
+          Skills & Technologies
         </CardTitle>
         <CardDescription>
-          Add your technical skills and expertise. You can select from suggestions or add custom skills.
+          Add your technical skills and expertise. Start typing to search or browse by category.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
-        {/* Selected Skills Display */}
+        {/* Search and Add Skills */}
         <div className="space-y-2">
-          <div className="flex items-center justify-between">
-            <label className="text-sm font-medium">Selected Skills ({selectedSkills.length}/{maxSkills})</label>
-            {selectedSkills.length > 0 && (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => onChange([])}
-                disabled={disabled}
-                className="text-red-600 hover:text-red-700"
-              >
-                Clear All
-              </Button>
-            )}
+          <Label>Search Skills</Label>
+          <div className="flex gap-2">
+            <Popover open={isPopoverOpen} onOpenChange={setIsPopoverOpen}>
+              <PopoverTrigger asChild>
+                <div className="relative flex-1">
+                  <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                  <Input
+                    placeholder="Search for skills (e.g., React, Python, AWS)..."
+                    value={searchTerm}
+                    onChange={(e) => {
+                      setSearchTerm(e.target.value)
+                      setIsPopoverOpen(e.target.value.length > 0)
+                    }}
+                    className="pl-10"
+                    disabled={disabled}
+                  />
+                </div>
+              </PopoverTrigger>
+              <PopoverContent className="w-full p-0" align="start">
+                <Command>
+                  <CommandList>
+                    {filteredSkills().length > 0 ? (
+                      <CommandGroup>
+                        {filteredSkills().map((skill) => (
+                          <CommandItem key={skill} onSelect={() => addSkill(skill)} className="cursor-pointer">
+                            {skill}
+                          </CommandItem>
+                        ))}
+                      </CommandGroup>
+                    ) : searchTerm ? (
+                      <CommandEmpty>
+                        No skills found. Add "{searchTerm}" as a custom skill?
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="mt-2 bg-transparent"
+                          onClick={() => addSkill(searchTerm)}
+                        >
+                          Add "{searchTerm}"
+                        </Button>
+                      </CommandEmpty>
+                    ) : null}
+                  </CommandList>
+                </Command>
+              </PopoverContent>
+            </Popover>
           </div>
-          
-          {selectedSkills.length === 0 ? (
-            <div className="text-sm text-gray-500 italic">
-              No skills added yet. Start typing to add skills.
-            </div>
-          ) : (
-            <div className="flex flex-wrap gap-2">
-              {selectedSkills.map((skill) => (
-                <Badge
+        </div>
+
+        {/* Add Custom Skill */}
+        <div className="space-y-2">
+          <Label>Add Custom Skill</Label>
+          <div className="flex gap-2">
+            <Input
+              placeholder="Enter a custom skill..."
+              value={customSkill}
+              onChange={(e) => setCustomSkill(e.target.value)}
+              onKeyPress={(e) => e.key === "Enter" && addCustomSkill()}
+              disabled={disabled}
+            />
+            <Button onClick={addCustomSkill} disabled={!customSkill.trim() || disabled} size="sm">
+              <Plus className="h-4 w-4" />
+            </Button>
+          </div>
+        </div>
+
+        {/* Popular Skills */}
+        <div className="space-y-2">
+          <Label>Popular Skills</Label>
+          <div className="flex flex-wrap gap-2">
+            {POPULAR_SKILLS.filter((skill) => !selectedSkills.includes(skill))
+              .slice(0, 10)
+              .map((skill) => (
+                <Button
                   key={skill}
-                  variant="secondary"
-                  className="group cursor-pointer hover:bg-red-100 hover:text-red-700"
-                  onClick={() => !disabled && removeSkill(skill)}
+                  variant="outline"
+                  size="sm"
+                  onClick={() => addSkill(skill)}
+                  disabled={disabled}
+                  className="h-8 text-xs"
                 >
-                  <span className="text-xs text-gray-500 mr-1">
-                    {getSkillCategory(skill)}
-                  </span>
+                  <Plus className="h-3 w-3 mr-1" />
                   {skill}
-                  {!disabled && (
-                    <X className="h-3 w-3 ml-1 opacity-0 group-hover:opacity-100 transition-opacity" />
+                </Button>
+              ))}
+          </div>
+        </div>
+
+        {/* Skills by Category */}
+        <div className="space-y-4">
+          <Label>Browse by Category</Label>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {Object.entries(SKILLS_DATABASE).map(([category, skills]) => (
+              <Card key={category} className="p-3">
+                <div className="flex items-center gap-2 mb-2">
+                  {getCategoryIcon(category)}
+                  <h4 className="font-medium text-sm">{category}</h4>
+                </div>
+                <div className="flex flex-wrap gap-1">
+                  {skills
+                    .filter((skill) => !selectedSkills.includes(skill))
+                    .slice(0, 6)
+                    .map((skill) => (
+                      <Button
+                        key={skill}
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => addSkill(skill)}
+                        disabled={disabled}
+                        className="h-6 text-xs px-2 hover:bg-blue-50"
+                      >
+                        {skill}
+                      </Button>
+                    ))}
+                  {skills.filter((skill) => !selectedSkills.includes(skill)).length > 6 && (
+                    <span className="text-xs text-gray-500 px-2 py-1">
+                      +{skills.filter((skill) => !selectedSkills.includes(skill)).length - 6} more
+                    </span>
                   )}
+                </div>
+              </Card>
+            ))}
+          </div>
+        </div>
+
+        {/* Selected Skills */}
+        {selectedSkills.length > 0 && (
+          <div className="space-y-2">
+            <Label>Selected Skills ({selectedSkills.length})</Label>
+            <div className="flex flex-wrap gap-2 p-4 bg-gray-50 rounded-lg">
+              {selectedSkills.map((skill) => (
+                <Badge key={skill} variant="secondary" className="flex items-center gap-1 px-3 py-1">
+                  {skill}
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => removeSkill(skill)}
+                    disabled={disabled}
+                    className="h-4 w-4 p-0 hover:bg-red-100"
+                  >
+                    <X className="h-3 w-3" />
+                  </Button>
                 </Badge>
               ))}
             </div>
-          )}
-        </div>
-
-        {/* Skill Input */}
-        <div className="space-y-2">
-          <label className="text-sm font-medium">Add Skills</label>
-          <Popover open={isPopoverOpen} onOpenChange={setIsPopoverOpen}>
-            <PopoverTrigger asChild>
-              <div className="relative">
-                <Input
-                  value={inputValue}
-                  onChange={(e) => handleInputChange(e.target.value)}
-                  onKeyDown={handleKeyPress}
-                  placeholder={placeholder}
-                  disabled={disabled || selectedSkills.length >= maxSkills}
-                  className="pr-10"
-                />
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  className="absolute right-1 top-1/2 -translate-y-1/2 h-6 w-6 p-0"
-                  onClick={() => inputValue.trim() && addSkill(inputValue)}
-                  disabled={!inputValue.trim() || selectedSkills.length >= maxSkills}
-                >
-                  <Plus className="h-4 w-4" />
-                </Button>
-              </div>
-            </PopoverTrigger>
-            
-            <PopoverContent className="w-[400px] p-0" align="start">
-              <Command>
-                <CommandInput placeholder="Search skills..." />
-                <CommandList>
-                  <CommandEmpty>No skills found.</CommandEmpty>
-                  
-                  {/* Filtered suggestions */}
-                  {filteredSkills.length > 0 && (
-                    <CommandGroup heading="Suggestions">
-                      {filteredSkills.map((skill) => (
-                        <CommandItem
-                          key={skill}
-                          onSelect={() => addSkill(skill)}
-                          className="flex items-center justify-between"
-                        >
-                          <div className="flex items-center gap-2">
-                            <span>{skill}</span>
-                            <Badge variant="outline" className="text-xs">
-                              {getSkillCategory(skill)}
-                            </Badge>
-                          </div>
-                          <Plus className="h-4 w-4" />
-                        </CommandItem>
-                      ))}
-                    </CommandGroup>
-                  )}
-
-                  {/* Browse by category */}
-                  <CommandGroup heading="Browse by Category">
-                    {Object.entries(SKILL_CATEGORIES).map(([category, skills]) => (
-                      <CommandItem
-                        key={category}
-                        onSelect={() => {
-                          // Show sub-items for this category
-                          const availableSkills = skills.filter(skill => !selectedSkills.includes(skill))
-                          if (availableSkills.length > 0) {
-                            // For now, just add the first available skill
-                            addSkill(availableSkills[0])
-                          }
-                        }}
-                        className="flex items-center justify-between"
-                      >
-                        <span>{category}</span>
-                        <ChevronsUpDown className="h-4 w-4" />
-                      </CommandItem>
-                    ))}
-                  </CommandGroup>
-                </CommandList>
-              </Command>
-            </PopoverContent>
-          </Popover>
-          
-          {selectedSkills.length >= maxSkills && (
-            <p className="text-sm text-amber-600">
-              Maximum number of skills reached ({maxSkills}). Remove some skills to add more.
-            </p>
-          )}
-        </div>
-
-        {/* Skill Categories Overview */}
-        <div className="space-y-2">
-          <label className="text-sm font-medium">Skill Categories</label>
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-            {Object.entries(SKILL_CATEGORIES).map(([category, skills]) => {
-              const selectedInCategory = skills.filter(skill => selectedSkills.includes(skill))
-              return (
-                <div
-                  key={category}
-                  className="p-2 border rounded text-xs cursor-pointer hover:bg-gray-50"
-                  onClick={() => {
-                    // Show skills in this category
-                    const availableSkills = skills.filter(skill => !selectedSkills.includes(skill))
-                    if (availableSkills.length > 0) {
-                      setInputValue("")
-                      setIsPopoverOpen(true)
-                    }
-                  }}
-                >
-                  <div className="font-medium">{category}</div>
-                  <div className="text-gray-500">
-                    {selectedInCategory.length} of {skills.length} selected
-                  </div>
-                </div>
-              )
-            })}
           </div>
-        </div>
+        )}
 
-        {/* Tips */}
-        <div className="text-xs text-gray-500 space-y-1">
-          <p>💡 <strong>Tip:</strong> Start typing to see skill suggestions</p>
-          <p>💡 <strong>Tip:</strong> Press Enter to add a custom skill</p>
-          <p>💡 <strong>Tip:</strong> Click on a skill badge to remove it</p>
-        </div>
+        {/* Skills Summary */}
+        {selectedSkills.length > 0 && (
+          <div className="text-sm text-gray-600 bg-blue-50 p-3 rounded-lg">
+            <p className="font-medium mb-1">Skills Summary:</p>
+            <p>
+              You have selected {selectedSkills.length} skill{selectedSkills.length !== 1 ? "s" : ""}. Having 8-15
+              relevant skills typically provides the best job matching results.
+            </p>
+          </div>
+        )}
       </CardContent>
     </Card>
   )
-} 
+}

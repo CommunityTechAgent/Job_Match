@@ -137,4 +137,4 @@ if ($gitStatus) {
 }
 
 # Main execution
-Bump-Version $BumpType 
+Bump-Version $BumpType

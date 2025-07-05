@@ -96,4 +96,4 @@ END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
 -- Grant execute permission on the function
-GRANT EXECUTE ON FUNCTION get_user_resume_url(UUID) TO authenticated; 
+GRANT EXECUTE ON FUNCTION get_user_resume_url(UUID) TO authenticated;

@@ -172,4 +172,4 @@ FROM profiles
 WHERE resume_path IS NOT NULL;
 
 -- Grant select permission on the view
-GRANT SELECT ON resume_processing_status TO authenticated; 
+GRANT SELECT ON resume_processing_status TO authenticated;

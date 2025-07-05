@@ -249,4 +249,4 @@ export function getPrompt(category: keyof typeof RESUME_ANALYSIS_PROMPTS | keyof
   }
   
   return categoryPrompts[type]
-} 
+}

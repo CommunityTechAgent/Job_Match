@@ -104,4 +104,4 @@ export function useSessionLoader() {
         .finally(() => setLoading(false));
     }
   }, [user, setProfile, setLoading]);
-} 
+}

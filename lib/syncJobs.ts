@@ -196,4 +196,4 @@ export async function getLastSyncDate(): Promise<string | null> {
   }
   
   return data?.last_sync_date || null
-} 
+}

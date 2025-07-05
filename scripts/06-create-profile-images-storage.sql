@@ -33,4 +33,4 @@ CREATE POLICY "Users can delete their own profile images" ON storage.objects
   );
 
 -- Note: The actual bucket creation should be done via Supabase Dashboard or API
--- This script focuses on RLS policies for the profile-images bucket 
+-- This script focuses on RLS policies for the profile-images bucket

@@ -6,12 +6,25 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Checkbox } from "@/components/ui/checkbox"
 import { Badge } from "@/components/ui/badge"
-import { Alert, AlertDescription } from "@/components/ui/alert"
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
-import { GraduationCap, Plus, Edit, Trash2, Calendar, MapPin, Award, AlertCircle } from "lucide-react"
-import { type EducationEntry } from "@/lib/supabase"
-import { validationUtils } from "@/lib/validation"
+import { Plus, Trash2, GraduationCap, Calendar, MapPin, Award, Edit3, Save, X } from "lucide-react"
+
+export interface EducationEntry {
+  id: string
+  degree: string
+  field_of_study: string
+  school: string
+  location?: string
+  start_date: string
+  end_date?: string
+  is_current: boolean
+  gpa?: number
+  description?: string
+  activities?: string[]
+  honors?: string[]
+}
 
 interface EducationManagerProps {
   education: EducationEntry[]
@@ -19,151 +32,115 @@ interface EducationManagerProps {
   disabled?: boolean
 }
 
-export function EducationManager({ education, onChange, disabled = false }: EducationManagerProps) {
-  const [isDialogOpen, setIsDialogOpen] = useState(false)
-  const [editingIndex, setEditingIndex] = useState<number | null>(null)
-  const [formData, setFormData] = useState<EducationEntry>({
-    institution: "",
-    degree: "",
-    field: "",
-    start_date: "",
-    end_date: "",
-    description: "",
-    gpa: undefined
-  })
-  const [errors, setErrors] = useState<Record<string, string>>({})
+const DEGREE_TYPES = [
+  "High School Diploma",
+  "Associate Degree",
+  "Bachelor's Degree",
+  "Master's Degree",
+  "Doctoral Degree (PhD)",
+  "Professional Degree (JD, MD, etc.)",
+  "Certificate",
+  "Diploma",
+  "Other",
+]
 
-  // Reset form
-  const resetForm = useCallback(() => {
-    setFormData({
-      institution: "",
+const COMMON_FIELDS = [
+  "Computer Science",
+  "Information Technology",
+  "Software Engineering",
+  "Electrical Engineering",
+  "Mechanical Engineering",
+  "Civil Engineering",
+  "Business Administration",
+  "Marketing",
+  "Finance",
+  "Accounting",
+  "Economics",
+  "Psychology",
+  "Biology",
+  "Chemistry",
+  "Physics",
+  "Mathematics",
+  "Statistics",
+  "Data Science",
+  "Graphic Design",
+  "Communications",
+  "English",
+  "History",
+  "Political Science",
+  "Sociology",
+  "Education",
+  "Nursing",
+  "Medicine",
+  "Law",
+  "Other",
+]
+
+export function EducationManager({ education, onChange, disabled = false }: EducationManagerProps) {
+  const [editingId, setEditingId] = useState<string | null>(null)
+  const [showAddForm, setShowAddForm] = useState(false)
+
+  // Create new education entry
+  const createNewEntry = useCallback(
+    (): EducationEntry => ({
+      id: Date.now().toString(),
       degree: "",
-      field: "",
+      field_of_study: "",
+      school: "",
+      location: "",
       start_date: "",
       end_date: "",
+      is_current: false,
+      gpa: undefined,
       description: "",
-      gpa: undefined
-    })
-    setErrors({})
-    setEditingIndex(null)
-  }, [])
+      activities: [],
+      honors: [],
+    }),
+    [],
+  )
 
-  // Open dialog for adding new education
-  const handleAdd = useCallback(() => {
-    resetForm()
-    setIsDialogOpen(true)
-  }, [resetForm])
+  // Add new education entry
+  const addEducation = useCallback(() => {
+    const newEntry = createNewEntry()
+    onChange([...education, newEntry])
+    setEditingId(newEntry.id)
+    setShowAddForm(true)
+  }, [education, onChange, createNewEntry])
 
-  // Open dialog for editing education
-  const handleEdit = useCallback((index: number) => {
-    setFormData(education[index])
-    setEditingIndex(index)
-    setIsDialogOpen(true)
-  }, [education])
+  // Update education entry
+  const updateEducation = useCallback(
+    (id: string, updates: Partial<EducationEntry>) => {
+      onChange(education.map((entry) => (entry.id === id ? { ...entry, ...updates } : entry)))
+    },
+    [education, onChange],
+  )
 
-  // Delete education entry
-  const handleDelete = useCallback((index: number) => {
-    const newEducation = education.filter((_, i) => i !== index)
-    onChange(newEducation)
-  }, [education, onChange])
-
-  // Validate form
-  const validateForm = useCallback((): boolean => {
-    const newErrors: Record<string, string> = {}
-
-    // Required fields
-    if (!formData.institution.trim()) {
-      newErrors.institution = "Institution is required"
-    }
-    if (!formData.degree.trim()) {
-      newErrors.degree = "Degree is required"
-    }
-    if (!formData.field.trim()) {
-      newErrors.field = "Field of study is required"
-    }
-
-    // Date validation
-    if (formData.start_date && !validationUtils.validateDate(formData.start_date)) {
-      newErrors.start_date = "Invalid start date"
-    }
-    if (formData.end_date && !validationUtils.validateDate(formData.end_date)) {
-      newErrors.end_date = "Invalid end date"
-    }
-
-    // Date range validation
-    if (formData.start_date && formData.end_date) {
-      const startDate = new Date(formData.start_date)
-      const endDate = new Date(formData.end_date)
-      if (endDate < startDate) {
-        newErrors.end_date = "End date cannot be before start date"
+  // Remove education entry
+  const removeEducation = useCallback(
+    (id: string) => {
+      onChange(education.filter((entry) => entry.id !== id))
+      if (editingId === id) {
+        setEditingId(null)
       }
-    }
+    },
+    [education, onChange, editingId],
+  )
 
-    // GPA validation
-    if (formData.gpa !== undefined && formData.gpa !== null) {
-      const gpa = Number(formData.gpa)
-      if (isNaN(gpa) || gpa < 0 || gpa > 4) {
-        newErrors.gpa = "GPA must be between 0 and 4"
-      }
-    }
-
-    setErrors(newErrors)
-    return Object.keys(newErrors).length === 0
-  }, [formData])
-
-  // Handle form submission
-  const handleSubmit = useCallback(() => {
-    if (!validateForm()) return
-
-    const newEducation = [...education]
-    
-    if (editingIndex !== null) {
-      // Update existing entry
-      newEducation[editingIndex] = { ...formData }
-    } else {
-      // Add new entry
-      newEducation.push({ ...formData })
-    }
-
-    onChange(newEducation)
-    setIsDialogOpen(false)
-    resetForm()
-  }, [formData, education, editingIndex, onChange, validateForm, resetForm])
-
-  // Handle form field changes
-  const handleFieldChange = useCallback((field: keyof EducationEntry, value: any) => {
-    setFormData(prev => ({ ...prev, [field]: value }))
-    
-    // Clear error for this field
-    if (errors[field]) {
-      setErrors(prev => ({ ...prev, [field]: "" }))
-    }
-  }, [errors])
-
-  // Format date for display
-  const formatDate = useCallback((dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', { 
-      year: 'numeric', 
-      month: 'short' 
-    })
+  // Start editing
+  const startEditing = useCallback((id: string) => {
+    setEditingId(id)
+    setShowAddForm(false)
   }, [])
 
-  // Get current status
-  const getCurrentStatus = useCallback((entry: EducationEntry) => {
-    if (!entry.start_date) return "Unknown"
-    
-    const startDate = new Date(entry.start_date)
-    const endDate = entry.end_date ? new Date(entry.end_date) : null
-    const now = new Date()
-    
-    if (endDate) {
-      return "Completed"
-    } else if (startDate <= now) {
-      return "In Progress"
-    } else {
-      return "Planned"
-    }
+  // Stop editing
+  const stopEditing = useCallback(() => {
+    setEditingId(null)
+    setShowAddForm(false)
   }, [])
+
+  // Generate years for dropdowns
+  const currentYear = new Date().getFullYear()
+  const years = Array.from({ length: 50 }, (_, i) => currentYear - i)
 
   return (
     <Card>
@@ -172,255 +149,365 @@ export function EducationManager({ education, onChange, disabled = false }: Educ
           <GraduationCap className="h-5 w-5" />
           Education
         </CardTitle>
-        <CardDescription>
-          Add your educational background and qualifications
-        </CardDescription>
+        <CardDescription>Add your educational background to showcase your qualifications</CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
-        {/* Education List */}
-        {education.length === 0 ? (
-          <div className="text-center py-8 text-gray-500">
-            <GraduationCap className="h-12 w-12 mx-auto mb-4 text-gray-300" />
-            <p>No education entries yet</p>
-            <p className="text-sm">Add your educational background to enhance your profile</p>
-          </div>
-        ) : (
-          <div className="space-y-3">
-            {education.map((entry, index) => (
-              <div key={index} className="border rounded-lg p-4 hover:bg-gray-50 transition-colors">
-                <div className="flex items-start justify-between">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-2">
-                      <h4 className="font-semibold text-lg">{entry.institution}</h4>
-                      <Badge variant="outline" className="text-xs">
-                        {getCurrentStatus(entry)}
-                      </Badge>
-                    </div>
-                    
-                    <div className="flex items-center gap-4 text-sm text-gray-600 mb-2">
-                      <div className="flex items-center gap-1">
-                        <Award className="h-4 w-4" />
-                        <span>{entry.degree} in {entry.field}</span>
+        {/* Education Entries */}
+        {education.map((entry) => (
+          <Card key={entry.id} className="relative">
+            <CardContent className="pt-6">
+              {editingId === entry.id ? (
+                // Edit Form
+                <EducationForm
+                  entry={entry}
+                  onUpdate={(updates) => updateEducation(entry.id, updates)}
+                  onSave={stopEditing}
+                  onCancel={stopEditing}
+                  disabled={disabled}
+                />
+              ) : (
+                // Display View
+                <div className="space-y-3">
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-1">
+                        <h4 className="font-semibold text-lg">{entry.degree || "Degree"}</h4>
+                        {entry.is_current && <Badge variant="secondary">Current</Badge>}
                       </div>
-                    </div>
-                    
-                    <div className="flex items-center gap-4 text-sm text-gray-500 mb-2">
-                      {entry.start_date && (
+                      {entry.field_of_study && <p className="text-gray-600 mb-1">{entry.field_of_study}</p>}
+                      <div className="flex items-center gap-4 text-sm text-gray-500">
+                        <div className="flex items-center gap-1">
+                          <GraduationCap className="h-4 w-4" />
+                          {entry.school || "School Name"}
+                        </div>
+                        {entry.location && (
+                          <div className="flex items-center gap-1">
+                            <MapPin className="h-4 w-4" />
+                            {entry.location}
+                          </div>
+                        )}
                         <div className="flex items-center gap-1">
                           <Calendar className="h-4 w-4" />
-                          <span>{formatDate(entry.start_date)}</span>
-                          {entry.end_date && <span> - {formatDate(entry.end_date)}</span>}
+                          {entry.start_date} - {entry.is_current ? "Present" : entry.end_date || "End Date"}
                         </div>
-                      )}
+                      </div>
                       {entry.gpa && (
-                        <div className="flex items-center gap-1">
+                        <div className="flex items-center gap-1 mt-2 text-sm">
+                          <Award className="h-4 w-4 text-yellow-500" />
                           <span>GPA: {entry.gpa}</span>
                         </div>
                       )}
+                      {entry.description && <p className="text-sm text-gray-700 mt-2">{entry.description}</p>}
+                      {entry.activities && entry.activities.length > 0 && (
+                        <div className="mt-2">
+                          <p className="text-sm font-medium mb-1">Activities:</p>
+                          <div className="flex flex-wrap gap-1">
+                            {entry.activities.map((activity, index) => (
+                              <Badge key={index} variant="outline" className="text-xs">
+                                {activity}
+                              </Badge>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                      {entry.honors && entry.honors.length > 0 && (
+                        <div className="mt-2">
+                          <p className="text-sm font-medium mb-1">Honors & Awards:</p>
+                          <div className="flex flex-wrap gap-1">
+                            {entry.honors.map((honor, index) => (
+                              <Badge key={index} variant="secondary" className="text-xs">
+                                {honor}
+                              </Badge>
+                            ))}
+                          </div>
+                        </div>
+                      )}
                     </div>
-                    
-                    {entry.description && (
-                      <p className="text-sm text-gray-600 mt-2">{entry.description}</p>
-                    )}
-                  </div>
-                  
-                  {!disabled && (
                     <div className="flex gap-2 ml-4">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleEdit(index)}
-                      >
-                        <Edit className="h-4 w-4" />
+                      <Button variant="outline" size="sm" onClick={() => startEditing(entry.id)} disabled={disabled}>
+                        <Edit3 className="h-4 w-4" />
                       </Button>
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => handleDelete(index)}
+                        onClick={() => removeEducation(entry.id)}
+                        disabled={disabled}
                         className="text-red-600 hover:text-red-700"
                       >
                         <Trash2 className="h-4 w-4" />
                       </Button>
                     </div>
-                  )}
+                  </div>
                 </div>
-              </div>
-            ))}
-          </div>
+              )}
+            </CardContent>
+          </Card>
+        ))}
+
+        {/* Add New Education Form */}
+        {showAddForm && editingId && (
+          <Card>
+            <CardContent className="pt-6">
+              <EducationForm
+                entry={education.find((e) => e.id === editingId)!}
+                onUpdate={(updates) => updateEducation(editingId, updates)}
+                onSave={stopEditing}
+                onCancel={() => {
+                  removeEducation(editingId)
+                  stopEditing()
+                }}
+                disabled={disabled}
+                isNew={true}
+              />
+            </CardContent>
+          </Card>
         )}
 
         {/* Add Education Button */}
-        {!disabled && (
-          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-            <DialogTrigger asChild>
-              <Button onClick={handleAdd} className="w-full">
-                <Plus className="h-4 w-4 mr-2" />
-                Add Education
-              </Button>
-            </DialogTrigger>
-            
-            <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-              <DialogHeader>
-                <DialogTitle>
-                  {editingIndex !== null ? "Edit Education" : "Add Education"}
-                </DialogTitle>
-                <DialogDescription>
-                  Enter your educational details. Required fields are marked with an asterisk (*).
-                </DialogDescription>
-              </DialogHeader>
-              
-              <div className="space-y-4">
-                {/* Institution */}
-                <div className="space-y-2">
-                  <Label htmlFor="institution">
-                    Institution * <span className="text-red-500">*</span>
-                  </Label>
-                  <Input
-                    id="institution"
-                    value={formData.institution}
-                    onChange={(e) => handleFieldChange("institution", e.target.value)}
-                    placeholder="University of Technology"
-                    className={errors.institution ? "border-red-500" : ""}
-                  />
-                  {errors.institution && (
-                    <Alert variant="destructive" className="py-2">
-                      <AlertCircle className="h-4 w-4" />
-                      <AlertDescription>{errors.institution}</AlertDescription>
-                    </Alert>
-                  )}
-                </div>
+        {!showAddForm && (
+          <Button variant="outline" onClick={addEducation} disabled={disabled} className="w-full bg-transparent">
+            <Plus className="h-4 w-4 mr-2" />
+            Add Education
+          </Button>
+        )}
 
-                {/* Degree and Field */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="degree">
-                      Degree * <span className="text-red-500">*</span>
-                    </Label>
-                    <Input
-                      id="degree"
-                      value={formData.degree}
-                      onChange={(e) => handleFieldChange("degree", e.target.value)}
-                      placeholder="Bachelor of Science"
-                      className={errors.degree ? "border-red-500" : ""}
-                    />
-                    {errors.degree && (
-                      <Alert variant="destructive" className="py-2">
-                        <AlertCircle className="h-4 w-4" />
-                        <AlertDescription>{errors.degree}</AlertDescription>
-                      </Alert>
-                    )}
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="field">
-                      Field of Study * <span className="text-red-500">*</span>
-                    </Label>
-                    <Input
-                      id="field"
-                      value={formData.field}
-                      onChange={(e) => handleFieldChange("field", e.target.value)}
-                      placeholder="Computer Science"
-                      className={errors.field ? "border-red-500" : ""}
-                    />
-                    {errors.field && (
-                      <Alert variant="destructive" className="py-2">
-                        <AlertCircle className="h-4 w-4" />
-                        <AlertDescription>{errors.field}</AlertDescription>
-                      </Alert>
-                    )}
-                  </div>
-                </div>
-
-                {/* Dates */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="start_date">Start Date</Label>
-                    <Input
-                      id="start_date"
-                      type="date"
-                      value={formData.start_date}
-                      onChange={(e) => handleFieldChange("start_date", e.target.value)}
-                      className={errors.start_date ? "border-red-500" : ""}
-                    />
-                    {errors.start_date && (
-                      <Alert variant="destructive" className="py-2">
-                        <AlertCircle className="h-4 w-4" />
-                        <AlertDescription>{errors.start_date}</AlertDescription>
-                      </Alert>
-                    )}
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="end_date">End Date (leave empty if ongoing)</Label>
-                    <Input
-                      id="end_date"
-                      type="date"
-                      value={formData.end_date}
-                      onChange={(e) => handleFieldChange("end_date", e.target.value)}
-                      className={errors.end_date ? "border-red-500" : ""}
-                    />
-                    {errors.end_date && (
-                      <Alert variant="destructive" className="py-2">
-                        <AlertCircle className="h-4 w-4" />
-                        <AlertDescription>{errors.end_date}</AlertDescription>
-                      </Alert>
-                    )}
-                  </div>
-                </div>
-
-                {/* GPA */}
-                <div className="space-y-2">
-                  <Label htmlFor="gpa">GPA (optional)</Label>
-                  <Input
-                    id="gpa"
-                    type="number"
-                    step="0.01"
-                    min="0"
-                    max="4"
-                    value={formData.gpa || ""}
-                    onChange={(e) => handleFieldChange("gpa", e.target.value ? Number(e.target.value) : undefined)}
-                    placeholder="3.8"
-                    className={errors.gpa ? "border-red-500" : ""}
-                  />
-                  {errors.gpa && (
-                    <Alert variant="destructive" className="py-2">
-                      <AlertCircle className="h-4 w-4" />
-                      <AlertDescription>{errors.gpa}</AlertDescription>
-                    </Alert>
-                  )}
-                </div>
-
-                {/* Description */}
-                <div className="space-y-2">
-                  <Label htmlFor="description">Description (optional)</Label>
-                  <Textarea
-                    id="description"
-                    value={formData.description}
-                    onChange={(e) => handleFieldChange("description", e.target.value)}
-                    placeholder="Describe your studies, achievements, or relevant coursework..."
-                    rows={3}
-                  />
-                </div>
-              </div>
-
-              <div className="flex justify-end gap-2 pt-4">
-                <Button
-                  variant="outline"
-                  onClick={() => {
-                    setIsDialogOpen(false)
-                    resetForm()
-                  }}
-                >
-                  Cancel
-                </Button>
-                <Button onClick={handleSubmit}>
-                  {editingIndex !== null ? "Update" : "Add"} Education
-                </Button>
-              </div>
-            </DialogContent>
-          </Dialog>
+        {/* Education Tips */}
+        {education.length === 0 && (
+          <div className="text-center py-8 text-gray-500">
+            <GraduationCap className="h-12 w-12 mx-auto mb-4 text-gray-300" />
+            <p className="text-lg font-medium mb-2">No education added yet</p>
+            <p className="text-sm">
+              Add your educational background to improve your profile completeness and job matching.
+            </p>
+          </div>
         )}
       </CardContent>
     </Card>
   )
-} 
+}
+
+// Education Form Component
+interface EducationFormProps {
+  entry: EducationEntry
+  onUpdate: (updates: Partial<EducationEntry>) => void
+  onSave: () => void
+  onCancel: () => void
+  disabled?: boolean
+  isNew?: boolean
+}
+
+function EducationForm({ entry, onUpdate, onSave, onCancel, disabled = false, isNew = false }: EducationFormProps) {
+  const [activities, setActivities] = useState(entry.activities?.join(", ") || "")
+  const [honors, setHonors] = useState(entry.honors?.join(", ") || "")
+
+  const handleSave = useCallback(() => {
+    // Validate required fields
+    if (!entry.degree || !entry.school || !entry.start_date) {
+      return
+    }
+
+    // Update activities and honors arrays
+    onUpdate({
+      activities: activities
+        .split(",")
+        .map((a) => a.trim())
+        .filter((a) => a),
+      honors: honors
+        .split(",")
+        .map((h) => h.trim())
+        .filter((h) => h),
+    })
+
+    onSave()
+  }, [entry, activities, honors, onUpdate, onSave])
+
+  const isValid = entry.degree && entry.school && entry.start_date
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between mb-4">
+        <h4 className="font-semibold">{isNew ? "Add Education" : "Edit Education"}</h4>
+        <div className="flex gap-2">
+          <Button variant="outline" size="sm" onClick={onCancel} disabled={disabled}>
+            <X className="h-4 w-4 mr-1" />
+            Cancel
+          </Button>
+          <Button size="sm" onClick={handleSave} disabled={disabled || !isValid}>
+            <Save className="h-4 w-4 mr-1" />
+            Save
+          </Button>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="space-y-2">
+          <Label htmlFor="degree">Degree Type *</Label>
+          <Select value={entry.degree} onValueChange={(value) => onUpdate({ degree: value })} disabled={disabled}>
+            <SelectTrigger>
+              <SelectValue placeholder="Select degree type" />
+            </SelectTrigger>
+            <SelectContent>
+              {DEGREE_TYPES.map((degree) => (
+                <SelectItem key={degree} value={degree}>
+                  {degree}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="field">Field of Study</Label>
+          <Select
+            value={entry.field_of_study}
+            onValueChange={(value) => onUpdate({ field_of_study: value })}
+            disabled={disabled}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Select field of study" />
+            </SelectTrigger>
+            <SelectContent>
+              {COMMON_FIELDS.map((field) => (
+                <SelectItem key={field} value={field}>
+                  {field}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="space-y-2">
+          <Label htmlFor="school">School/Institution *</Label>
+          <Input
+            id="school"
+            value={entry.school}
+            onChange={(e) => onUpdate({ school: e.target.value })}
+            placeholder="University of Example"
+            disabled={disabled}
+          />
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="location">Location</Label>
+          <Input
+            id="location"
+            value={entry.location || ""}
+            onChange={(e) => onUpdate({ location: e.target.value })}
+            placeholder="City, State"
+            disabled={disabled}
+          />
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="space-y-2">
+          <Label htmlFor="start_date">Start Year *</Label>
+          <Select
+            value={entry.start_date}
+            onValueChange={(value) => onUpdate({ start_date: value })}
+            disabled={disabled}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Start year" />
+            </SelectTrigger>
+            <SelectContent>
+              {Array.from({ length: 50 }, (_, i) => new Date().getFullYear() - i).map((year) => (
+                <SelectItem key={year} value={year.toString()}>
+                  {year}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="end_date">End Year</Label>
+          <Select
+            value={entry.end_date || ""}
+            onValueChange={(value) => onUpdate({ end_date: value })}
+            disabled={disabled || entry.is_current}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="End year" />
+            </SelectTrigger>
+            <SelectContent>
+              {Array.from({ length: 50 }, (_, i) => new Date().getFullYear() - i).map((year) => (
+                <SelectItem key={year} value={year.toString()}>
+                  {year}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="gpa">GPA (Optional)</Label>
+          <Input
+            id="gpa"
+            type="number"
+            min="0"
+            max="4"
+            step="0.01"
+            value={entry.gpa || ""}
+            onChange={(e) => onUpdate({ gpa: e.target.value ? Number.parseFloat(e.target.value) : undefined })}
+            placeholder="3.75"
+            disabled={disabled}
+          />
+        </div>
+      </div>
+
+      <div className="flex items-center space-x-2">
+        <Checkbox
+          id="is_current"
+          checked={entry.is_current}
+          onCheckedChange={(checked) =>
+            onUpdate({
+              is_current: checked as boolean,
+              end_date: checked ? "" : entry.end_date,
+            })
+          }
+          disabled={disabled}
+        />
+        <Label htmlFor="is_current">I am currently enrolled</Label>
+      </div>
+
+      <div className="space-y-2">
+        <Label htmlFor="description">Description</Label>
+        <Textarea
+          id="description"
+          value={entry.description || ""}
+          onChange={(e) => onUpdate({ description: e.target.value })}
+          placeholder="Describe your studies, relevant coursework, thesis, etc."
+          rows={3}
+          disabled={disabled}
+        />
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="space-y-2">
+          <Label htmlFor="activities">Activities & Societies</Label>
+          <Input
+            id="activities"
+            value={activities}
+            onChange={(e) => setActivities(e.target.value)}
+            placeholder="Student Government, Chess Club, etc. (comma-separated)"
+            disabled={disabled}
+          />
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="honors">Honors & Awards</Label>
+          <Input
+            id="honors"
+            value={honors}
+            onChange={(e) => setHonors(e.target.value)}
+            placeholder="Dean's List, Magna Cum Laude, etc. (comma-separated)"
+            disabled={disabled}
+          />
+        </div>
+      </div>
+    </div>
+  )
+}
