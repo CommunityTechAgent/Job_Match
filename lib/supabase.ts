@@ -1,50 +1,63 @@
-import { createClientComponentClient } from "@supabase/auth-helpers-nextjs"
+import { createClient } from "@supabase/supabase-js"
 import type { Database } from "./database.types"
 
-export type Profile = Database["public"]["Tables"]["profiles"]["Row"]
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 
-let supabaseClient: ReturnType<typeof createClientComponentClient<Database>> | null = null
+export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey)
 
-export function createSupabaseClient() {
-  if (!supabaseClient) {
-    supabaseClient = createClientComponentClient<Database>()
+// Helper function to get user profile
+export async function getProfile(userId: string) {
+  const { data, error } = await supabase.from("profiles").select("*").eq("id", userId).maybeSingle()
+
+  if (error) {
+    console.error("Error fetching profile:", error)
+    throw error
   }
-  return supabaseClient
+
+  return data
 }
 
-export async function getProfile(userId: string): Promise<{ data: Profile | null; error: any }> {
-  try {
-    const supabase = createSupabaseClient()
-    const { data, error } = await supabase.from("profiles").select("*").eq("id", userId).single()
+// Helper function to create user profile
+export async function createProfile(userId: string, email: string, name?: string) {
+  const { data, error } = await supabase
+    .from("profiles")
+    .insert([
+      {
+        id: userId,
+        email,
+        name: name || email.split("@")[0],
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      },
+    ])
+    .select()
+    .single()
 
-    if (error) {
-      console.error("Error fetching profile:", error)
-      return { data: null, error }
-    }
-
-    return { data, error: null }
-  } catch (error) {
-    console.error("Unexpected error fetching profile:", error)
-    return { data: null, error }
+  if (error) {
+    console.error("Error creating profile:", error)
+    throw error
   }
+
+  return data
 }
 
-export async function updateProfile(
-  userId: string,
-  updates: Partial<Profile>,
-): Promise<{ data: Profile | null; error: any }> {
-  try {
-    const supabase = createSupabaseClient()
-    const { data, error } = await supabase.from("profiles").update(updates).eq("id", userId).select().single()
+// Helper function to update user profile
+export async function updateProfile(userId: string, updates: any) {
+  const { data, error } = await supabase
+    .from("profiles")
+    .update({
+      ...updates,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", userId)
+    .select()
+    .single()
 
-    if (error) {
-      console.error("Error updating profile:", error)
-      return { data: null, error }
-    }
-
-    return { data, error: null }
-  } catch (error) {
-    console.error("Unexpected error updating profile:", error)
-    return { data: null, error }
+  if (error) {
+    console.error("Error updating profile:", error)
+    throw error
   }
+
+  return data
 }

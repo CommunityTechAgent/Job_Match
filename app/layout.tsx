@@ -3,14 +3,14 @@ import type { Metadata } from "next"
 import { Inter } from "next/font/google"
 import "./globals.css"
 import { AuthProvider } from "@/contexts/auth-context"
-import { SessionLoader } from "@/components/auth/session-loader"
-import { Toaster } from "@/components/ui/sonner"
+import { Toaster } from "@/components/ui/toaster"
 
 const inter = Inter({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
-  title: "JobMatch AI - AI-Powered Job Matching Platform",
-  description: "Find your perfect job match with AI-powered recommendations and automated applications.",
+  title: "JobMatch AI - Find Your Perfect Job with AI",
+  description:
+    "AI-powered job matching platform that connects you with opportunities tailored to your skills and preferences.",
     generator: 'v0.dev'
 }
 
@@ -23,10 +23,8 @@ export default function RootLayout({
     <html lang="en">
       <body className={inter.className}>
         <AuthProvider>
-          <SessionLoader>
-            {children}
-            <Toaster />
-          </SessionLoader>
+          {children}
+          <Toaster />
         </AuthProvider>
       </body>
     </html>
