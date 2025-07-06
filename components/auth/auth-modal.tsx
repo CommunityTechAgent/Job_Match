@@ -22,28 +22,30 @@ export function AuthModal({ isOpen, onClose, defaultTab = "login" }: AuthModalPr
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [fullName, setFullName] = useState("")
+  const [formError, setFormError] = useState<string | null>(null)
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
-
+    setFormError(null)
     try {
       const supabase = createSupabaseClient()
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
       })
-
       if (error) {
+        setFormError(error.message)
         toast.error(error.message)
       } else {
+        setFormError(null)
         toast.success("Successfully logged in!")
         onClose()
-        // Reset form
         setEmail("")
         setPassword("")
       }
-    } catch (error) {
+    } catch (error: any) {
+      setFormError(error?.message || "An unexpected error occurred")
       toast.error("An unexpected error occurred")
       console.error("Login error:", error)
     } finally {
@@ -54,7 +56,7 @@ export function AuthModal({ isOpen, onClose, defaultTab = "login" }: AuthModalPr
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
-
+    setFormError(null)
     try {
       const supabase = createSupabaseClient()
       const { data, error } = await supabase.auth.signUp({
@@ -66,18 +68,19 @@ export function AuthModal({ isOpen, onClose, defaultTab = "login" }: AuthModalPr
           },
         },
       })
-
       if (error) {
+        setFormError(error.message)
         toast.error(error.message)
       } else {
+        setFormError(null)
         toast.success("Check your email to confirm your account!")
         onClose()
-        // Reset form
         setEmail("")
         setPassword("")
         setFullName("")
       }
-    } catch (error) {
+    } catch (error: any) {
+      setFormError(error?.message || "An unexpected error occurred")
       toast.error("An unexpected error occurred")
       console.error("Signup error:", error)
     } finally {
@@ -120,6 +123,9 @@ export function AuthModal({ isOpen, onClose, defaultTab = "login" }: AuthModalPr
                   required
                 />
               </div>
+              {formError && (
+                <div style={{ color: 'red', marginBottom: 8 }}>{formError}</div>
+              )}
               <Button type="submit" className="w-full" disabled={loading}>
                 {loading ? "Logging in..." : "Log In"}
               </Button>
@@ -160,6 +166,9 @@ export function AuthModal({ isOpen, onClose, defaultTab = "login" }: AuthModalPr
                   required
                 />
               </div>
+              {formError && (
+                <div style={{ color: 'red', marginBottom: 8 }}>{formError}</div>
+              )}
               <Button type="submit" className="w-full" disabled={loading}>
                 {loading ? "Creating account..." : "Sign Up"}
               </Button>
